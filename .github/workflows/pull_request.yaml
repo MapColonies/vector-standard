@@ -1,6 +1,14 @@
 name: pull_request
 
 on: pull_request
+env:
+  DB_HOST: localhost
+  DB_PORT: 5432
+  DB_NAME: postgres
+  DB_USERNAME: postgres
+  DB_PASSWORD: postgres
+  DB_SCHEMA: public
+  SOURCE_DB_SCHEMA: query
 
 permissions:
   contents: read
@@ -17,20 +25,22 @@ jobs:
 
     steps:
       - name: Check out TS Project Git repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
 
-      - name: Init Nodejs
-        uses: MapColonies/shared-workflows/actions/init-npm@init-npm-v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build workspace dependencies
+        run: npx lerna run build --scope=@map-colonies/vector-standard-db
 
       - name: Run TS Project linters
-        uses: wearerequired/lint-action@v3
-        with:
-          eslint: true
-          prettier: true
-          eslint_extensions: ts
-          tsc: true
+        run: npx lerna run lint
 
   openapi-lint:
     name: Run OpenAPI lint Check
@@ -38,13 +48,10 @@ jobs:
 
     steps:
       - name: Check out TS Project Git repository
-        uses: actions/checkout@v7
-
-      - name: Init Nodejs
-        uses: MapColonies/shared-workflows/actions/init-npm@init-npm-v1
+        uses: actions/checkout@v5
 
       - name: OpenAPI Lint Checks
-        run: npx @redocly/cli lint --format=github-actions openapi3.yaml
+        run: npx @redocly/cli lint --format=github-actions ./openapi3.yaml
 
   helm-lint:
     name: Run Helm lint Check
@@ -52,7 +59,7 @@ jobs:
 
     steps:
       - name: Check out TS Project Git repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -75,25 +82,100 @@ jobs:
     strategy:
       matrix:
         node: [24.x]
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgis/postgis:14-3.3
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD}}
+          POSTGRES_USER: ${{ env.DB_USERNAME }}
+          POSTGRES_DB: ${{ env.DB_NAME }}
+          DEST_DB_NAME: ${{ env.DB_USERNAME }}
+          DEST_DB_SCHEMA: ${{ env.DB_SCHEMA }}
+          DEST_DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          SOURCE_DB_NAME: ${{ env.DB_USERNAME }}
+          SOURCE_DB_SCHEMA: ${{ env.SOURCE_DB_SCHEMA }}
+          SOURCE_DB_PASSWORD: ${{ env.DB_PASSWORD }}
+
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v5
 
-      - name: Init Nodejs
-        uses: MapColonies/shared-workflows/actions/init-npm@init-npm-v1
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build workspace dependencies
+        run: npx lerna run build --scope=@map-colonies/vector-standard-db
+
+      - name: Install pg client
+        run: |
+          sudo apt-get update && sudo apt-get install -y lsb-release
+          echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /usr/share/keyrings/postgresql-keyring.asc > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/postgresql-keyring.asc] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+        shell: bash
+
+      - name: Create schema
+        run: psql -h $DB_HOST -d $DB_NAME -U $DB_USERNAME -c 'CREATE SCHEMA IF NOT EXISTS ${{ env.DB_SCHEMA }}; CREATE SCHEMA IF NOT EXISTS ${{ env.SOURCE_DB_SCHEMA }};'
+        env:
+          PGPASSWORD: ${{ env.DB_PASSWORD }}
+
+      - name: Run migrations
+        run: npx lerna run migration:run
 
       - name: Run tests
-        run: npm run test
+        run: npx lerna run test
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@v4
         with:
           name: Test Reporters Node-${{ matrix.node }}
-          path: reports/**
+          path: packages/*/html/**
+
+  build_docker_migrations_image:
+    name: Build Docker Migrations Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out TS Project Git repository
+        uses: actions/checkout@v5
+
+      - name: build migrations Docker image
+        run: docker build -f ./packages/db/migrations.Dockerfile -t test-migrations-build:latest .
 
   build_docker_image:
+    name: Build Docker Image
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        package: [api, synchronizer]
+
     steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v6
+
       - name: Build and Push Docker image
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./packages/${{ matrix.package }}/Dockerfile
+          push: false
+          tags: ${{ matrix.package }}:latest

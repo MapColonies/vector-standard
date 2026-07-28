@@ -1,130 +1,233 @@
+environment: &environment np
+
 global:
-  cloudProvider: {}
   tracing: {}
   metrics: {}
+  mclabels:
+    environment: "development"
 
-mclabels:
+mclabels: &mclabels
+  owner: vector
+  partOf: vector-standard
   component: backend
-  partOf: boilerplates
-  owner: common
+  logScraping: true
   prometheus:
     enabled: true
-
-enabled: true
-replicaCount: 1
-revisionHistoryLimit: 5  # Amount of revisions we keep
-nodePort: 30030  # for minikube deployment only
-resetOnConfigChange: false
-
-nameOverride: ""
-fullnameOverride: ""
-
-configManagement:
-  offlineMode: false
-  name: 'service-name'
-  version: 'latest'
-  serverUrl: 'http://localhost:8080/api'
-
-livenessProbe:
-  enabled: true
-  initialDelaySeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 6
-  path: /liveness
-
-readinessProbe:
-  enabled: true
-  initialDelaySeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 6
-  path: /liveness
-
-podAnnotations: {}
-
-extraVolumes: []
-
-extraVolumeMounts: []
-
-extraEnvVars: []
-
-command: []
-args: []
-# command: [ "/bin/sh", "-c", "--" ]
-# args: [ "while true; do sleep infinity; done;" ]
-
-sidecars: []
+    port: 8080
+    path: /metrics
 
 cloudProvider:
-  dockerRegistryUrl: ''
-  imagePullSecretName: ''
   flavor: openshift
+  dockerRegistryUrl: &dockerRegistryUrl ''
+  imagePullSecretName: &pullSecret ''
 
-caSecretName: ''
-caPath: '/usr/local/share/ca-certificates'
-caKey: 'ca.crt'
-
-image:
-  repository: ts-server-boilerplate
-  # If commented, appVersion will be taken. See: _helpers.tpl
-  # tag: 'latest'
-  pullPolicy: IfNotPresent
-
-env:
-  port: 8080
-  targetPort: 8080
-  protocol: TCP
-  logLevel: info
-  logPrettyPrintEnabled: false
-  responseCompressionEnabled: true
-  requestPayloadLimit: 1mb
-  tracing:
+dbConfig: &dbConfig
+  host: host
+  port: 5432
+  username: postgres
+  password: postgres
+  database: postgres
+  schema: public
+  type: postgres
+  sslAuth:
     enabled: false
-    url: http://localhost:55681/v1/trace
-  metrics:
-    enabled: false
-    url: http://localhost:55681/v1/metrics
-
-resources:
-  enabled: true
-  value:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-
-route:
-  enabled: true
-  path: /
-  host: ''
-  timeout:
-    enabled: false  # defaults to 30s by openshift
-    duration: 60s  # supported units (us, ms, s, m, h, d)
-  rewriteTarget: ''
-  tls:
-    enabled: true
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
-    useCerts: false
-    certificate: ''
+    secretName: secret-name
+    cert: ''
     key: ''
-    caCertificate: ''
+    root: ''
 
-ingress:
-  enabled: false
-  className: ""
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  labels: {}
-  path: /
-  pathType: Prefix
-  extraPaths: []
-  hosts: []
-  #  - "chart-example.local"
-  host: 'localhost'
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+api:
+  enabled: true
+  replicaCount: 1
+  revisionHistoryLimit: 5
+  environment: *environment
+  initialDelaySeconds: 60
+
+  cloudProvider:
+    dockerRegistryUrl: *dockerRegistryUrl
+    imagePullSecretName: *pullSecret
+
+  image:
+    repository: standard-api
+    pullPolicy: Always
+    tag: "v1.0.0"
+
+  startupProbe:
+    enabled: true
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+  livenessProbe:
+    enabled: true
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+
+  caSecretName: ''
+  caPath: '/usr/local/share/ca-certificates'
+  caKey: 'ca.crt'
+
+  env:
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+    logLevel: info
+    logPrettyPrintEnabled: false
+    responseCompressionEnabled: true
+    requestPayloadLimit: 1mb
+    tracing:
+      enabled: false
+      url: http://localhost:4318/v1/traces
+      ratio: 1
+    metrics:
+      enabled: false
+      url: http://localhost:55681/v1/metrics
+  db: *dbConfig
+
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  route:
+    enabled: true
+    host: ""
+    path: /
+    timeout:
+      enabled: true # defaults to 30s by openshift
+      duration: 900s # supported units (us, ms, s, m, h, d)
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+
+  mclabels: *mclabels
+
+synchronizer:
+  enabled: true
+  replicaCount: 1
+  revisionHistoryLimit: 5
+  resetOnConfigChange: false
+
+  nameOverride: ""
+  fullnameOverride: ""
+
+  ca:
+    caSecretName: ''
+    caPath: '/usr/local/share/destination/ca-certificates'
+    caKey: 'ca.crt'
+
+  startupProbe:
+    enabled: true
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+  livenessProbe:
+    enabled: true
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    path: /liveness
+
+  cloudProvider:
+    dockerRegistryUrl: *dockerRegistryUrl
+    imagePullSecretName: *pullSecret
+
+  image:
+    repository: standard-synchronizer
+    pullPolicy: Always
+    tag: "v1.0.0"
+
+  layers:
+  - layerName: buildings_polygon
+    enums: [ code, attribute ]
+
+  aliases:
+    "*":
+      number_of_floors: "number_of_floors"
+
+  env:
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+    logLevel: info
+    logPrettyPrintEnabled: false
+    tracing:
+      enabled: false
+      url: http://localhost:4318/v1/traces
+      ratio: 1
+    metrics:
+      enabled: false
+      url: http://localhost:55681/v1/metrics
+    schedule: '*/1 * * * *'
+    indexNameFormat: '{layerName}_{column}_idx'
+    layersFile: /usr/src/app/packages/synchronizer/dist/config/layers/layers.json
+    aliasesFile: /usr/src/app/packages/synchronizer/dist/config/aliases/aliases.json
+    enrichment:
+      enabled: false
+      api: ""
+      propertiesPath: ""
+      aliasField: ""
+
+  dbs:
+    s3:
+      endpoint: ""
+      region: us-east-1
+      forcePathStyle: true
+      sslEnabled: false
+      sigVersion: v4
+      storageClass: STANDARD
+      bucket: ""
+      fileName: ""
+      layersVariable: layers
+      accessKey: ""
+      secretKey: ""
+    sourceDb:
+      host: localhost
+      port: 5432
+      username: postgres
+      password: postgres
+      database: postgres
+      schema: public
+      type: postgres
+      sslAuth:
+        enabled: false
+        cert: ''
+        key: ''
+        root: ''
+    destinationDb: *dbConfig
+
+  resources:
+    enabled: true
+    value:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  mclabels: *mclabels

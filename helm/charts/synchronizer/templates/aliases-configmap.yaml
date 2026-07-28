@@ -1,0 +1,10 @@
+{{- if .Values.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "synchronizer.fullname" . }}-aliases
+  labels:
+    {{- include "synchronizer.labels" . | nindent 4 }}
+data:
+  aliases.json: {{ .Values.aliases | toPrettyJson | quote }}
+{{- end }}

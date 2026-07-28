@@ -1,6 +1,6 @@
 apiVersion: v2
-name: ts-server-boilerplate
-description: A Helm chart for ts-server-boilerplate service
+name: vector-standard
+description: Umbrella Helm chart for Vector Standard services (API and Synchronizer)
 type: application
 version: 1.0.0
 appVersion: 1.0.0
@@ -8,3 +8,4 @@ dependencies:
   - name: mclabels
     version: 1.0.1
     repository: oci://acrarolibotnonprod.azurecr.io/helm/infra
+

@@ -1,0 +1,137 @@
+enabled: true
+replicaCount: 1
+revisionHistoryLimit: 5
+resetOnConfigChange: false
+
+nameOverride: ""
+fullnameOverride: ""
+
+cloudProvider:
+  dockerRegistryUrl: ""
+  imagePullSecretName: ""
+
+image:
+  repository: standard-synchronizer
+  pullPolicy: Always
+  tag: "v1.0.0"
+
+caSecretName: ''
+caPath: '/usr/local/share/destination/ca-certificates'
+caKey: 'ca.crt'
+
+startupProbe:
+  enabled: true
+  periodSeconds: 10
+  timeoutSeconds: 5
+  # failureThreshold * periodSeconds = max startup wait (30 * 10s = 300s)
+  failureThreshold: 30
+
+livenessProbe:
+  enabled: true
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+layers:
+  - layerName: buildings_polygon
+    enums: [code, attribute, sensitivity, building_type, status]
+  - layerName: borders_polygon
+    enums: [code, attribute]
+
+aliases: {}
+
+env:
+  port: 80
+  targetPort: 8080
+  protocol: TCP
+  logLevel: info
+  logPrettyPrintEnabled: false
+  tracing:
+    enabled: false
+    url: http://localhost:4318/v1/traces
+    ratio: 1
+  metrics:
+    enabled: false
+    url: http://localhost:55681/v1/metrics
+  schedule: '0 0 * * *'
+  indexNameFormat: '{layerName}_{column}_idx'
+  layersFile: /usr/src/app/packages/synchronizer/dist/config/layers/layers.json
+  aliasesFile: /usr/src/app/packages/synchronizer/dist/config/aliases/aliases.json
+  enrichment:
+    enabled: false
+    api: ""
+    propertiesPath: ""
+    aliasField: ""
+
+dbs:
+  s3:
+    endpoint: ""
+    region: us-east-1
+    forcePathStyle: true
+    sslEnabled: false
+    sigVersion: v4
+    storageClass: STANDARD
+    bucket: ""
+    fileName: ""
+    layersVariable: layers
+    accessKey: ""
+    secretKey: ""
+  sourceDb:
+    host: localhost
+    port: 5432
+    username: postgres
+    password: postgres
+    database: postgres
+    schema: public
+    type: postgres
+    sslAuth:
+      enabled: false
+      secretName: secret-name
+      cert: ""
+      key: ""
+      root: ""
+  destinationDb:
+    host: localhost
+    port: 5432
+    username: postgres
+    password: postgres
+    database: postgres
+    schema: public
+    type: postgres
+    sslAuth:
+      enabled: false
+      secretName: secret-name
+      cert: ""
+      key: ""
+      root: ""
+
+resources:
+  enabled: true
+  value:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+nodePort: 30081
+
+mclabels:
+  owner: vector
+  partOf: vector-standard
+  component: backend
+  logScraping: true
+  prometheus:
+    enabled: true
+    port: 8080
+    path: /metrics

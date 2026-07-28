@@ -1,0 +1,64 @@
+{{- $tracingUrl := include "synchronizer.tracingUrl" . -}}
+{{- $metricsUrl := include "synchronizer.metricsUrl" . -}}
+{{- if .Values.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "synchronizer.fullname" . }}
+  labels:
+    {{- include "synchronizer.labels" . | nindent 4 }}
+data:
+  SERVER_PORT: {{ .Values.env.targetPort | quote }}
+
+  LOG_LEVEL: {{ .Values.env.logLevel | quote }}
+  LOG_PRETTY_PRINT_ENABLED: {{ .Values.env.logPrettyPrintEnabled | quote }}
+
+  {{- with .Values.env.tracing }}
+  TELEMETRY_TRACING_ENABLED: {{ .enabled | quote }}
+  {{- if .enabled }}
+  TELEMETRY_TRACING_URL: {{ $tracingUrl | quote }}
+  TELEMETRY_TRACING_RATIO: {{ .ratio | quote }}
+  {{- end }}
+  {{- end }}
+
+  {{- with .Values.env.metrics }}
+  TELEMETRY_METRICS_ENABLED: {{ .enabled | quote }}
+  {{- if .enabled }}
+  TELEMETRY_METRICS_URL: {{ $metricsUrl | quote }}
+  {{- end }}
+  {{- end }}
+
+  SYNC_FIELDS_CRON: {{ .Values.env.schedule | quote }}
+
+  INDEX_NAME_FORMAT: {{ .Values.env.indexNameFormat | quote }}
+
+  LAYERS_FILE_PATH: {{ .Values.env.layersFile | quote }}
+
+  ALIASES_FILE_PATH: {{ .Values.env.aliasesFile | quote }}
+
+  {{- with .Values.dbs.s3 }}
+  S3_ENDPOINT: {{ .endpoint | quote }}
+  S3_REGION: {{ .region | quote }}
+  S3_FORCE_PATH_STYLE: {{ .forcePathStyle | quote }}
+  S3_SSL_ENABLED: {{ .sslEnabled | quote }}
+  S3_SIG_VERSION: {{ .sigVersion | quote }}
+  S3_STORAGE_CLASS: {{ .storageClass | quote }}
+  S3_BUCKET: {{ .bucket | quote }}
+  S3_FILE_NAME: {{ .fileName | quote }}
+  S3_LAYERS_VARIABLE: {{ .layersVariable | quote }}
+  {{- end }}
+
+  {{- with .Values.env.enrichment }}
+  ENRICHMENT_ENABLED: {{ .enabled | quote }}
+  {{- if .enabled }}
+  ENRICHMENT_API_URL: {{ .api | quote }}
+  ENRICHMENT_PROPERTIES_PATH: {{ .propertiesPath | quote }}
+  ENRICHMENT_ALIAS_FIELD: {{ .aliasField | quote }}
+  {{- end }}
+  {{- end }}
+  {{- include "synchronizer.dbEnvBlock" (dict "prefix" "SOURCE_DB" "db" .Values.dbs.sourceDb) | nindent 2 }}
+  {{- include "synchronizer.dbEnvBlock" (dict "prefix" "DEST_DB" "db" .Values.dbs.destinationDb) | nindent 2 }}
+
+
+  npm_config_cache: /tmp/
+{{- end }}

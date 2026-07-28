@@ -1,106 +1,196 @@
-openapi: 3.0.1
+openapi: 3.0.3
 info:
-  title: service-name
-  description: basic template for map colonies service
+  title: Layers & Specs API
+  description: >
+    API for retrieving geographic layer specifications.
+    Layers expose a set of properties; `enum`-typed properties
+    also carry their list of allowed values.
   version: 1.0.0
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: Proprietary
+    url: https://example.com/licenses/proprietary
+
 paths:
-  /anotherResource:
+  /layers:
     get:
-      operationId: getAnotherResource
-      tags:
-        - anotherResource
-      summary: gets the resource
+      summary: Get all layer names
+      operationId: getLayers
+      security: []
       responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/anotherResource'
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-  /resourceName:
+        '200':
+          $ref: '#/components/responses/LayerListResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /layers/{layerName}:
     get:
-      operationId: getResourceName
-      tags:
-        - resourceName
-      summary: gets the resource
+      summary: Get layer spec by name
+      operationId: getLayerByName
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/LayerNameParam'
       responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-    post:
-      operationId: createResource
-      tags:
-        - resourceName
-      summary: creates a new record of type resource
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/resource'
-      responses:
-        201:
-          description: created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-security:
-  - {}
+        '200':
+          $ref: '#/components/responses/LayerSpecResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
 components:
+  # ─── Parameters ──────────────────────────────────────────────────────────────
+
+  parameters:
+    LayerNameParam:
+      name: layerName
+      in: path
+      required: true
+      description: The name of the layer (matches `Property.layerName`)
+      schema:
+        type: string
+        example: buildings_polygon
+
+  # ─── Responses ───────────────────────────────────────────────────────────────
+
+  responses:
+    LayerListResponse:
+      description: A list of layers with their display aliases
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LayerList'
+          example:
+            layers:
+              - layerName: buildings_polygon
+                alias: Buildings
+              - layerName: fences_line
+                alias: Fences
+
+    LayerSpecResponse:
+      description: Full layer specification including its properties
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/LayerSpec'
+          example:
+            layerName: buildings_polygon
+            alias: Buildings Polygon
+            properties:
+              - property: code
+                type: xsd:long
+                possibleValues:
+                  - '1001'
+                  - '1002'
+              - property: name
+                type: xsd:string
+              - property: number_of_floors
+                type: xsd:long
+                alias: Number of Floors
+              - property: geom
+                type: gml:PolygonPropertyType
+
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  # ─── Schemas ─────────────────────────────────────────────────────────────────
+
   schemas:
-    error:
+    LayerSummary:
       type: object
-      required:
-        - message
+      description: Basic layer info returned in the list endpoint.
       properties:
+        layerName:
+          type: string
+          description: Name of the layer
+          example: buildings_polygon
+        alias:
+          type: string
+          description: Display alias for the layer
+          example: Buildings
+      required:
+        - layerName
+        - alias
+
+    LayerList:
+      type: object
+      description: Response wrapper for the list of layers.
+      properties:
+        layers:
+          type: array
+          items:
+            $ref: '#/components/schemas/LayerSummary'
+      required:
+        - layers
+
+    LayerSpec:
+      type: object
+      description: >
+        A layer and all of its properties.
+        Groups rows from the `Property` entity by `layerName`.
+      properties:
+        layerName:
+          type: string
+          description: Name of the layer
+          example: buildings_polygon
+        alias:
+          type: string
+          description: Display alias for the layer
+          example: Buildings
+        properties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Property'
+      required:
+        - layerName
+        - alias
+        - properties
+
+    Property:
+      type: object
+      description: >
+        A single property definition for a layer.
+        Mirrors the `Property` entity, minus `id` and `layerName`
+        (which are implicit on the parent `LayerSpec`).
+        When the property has coded/enumerated values, `possibleValues` is populated.
+      properties:
+        property:
+          type: string
+          description: Property name
+          example: code
+        type:
+          $ref: '#/components/schemas/Type'
+        alias:
+          type: string
+          description: Display alias for the property
+          example: Number of Floors
+        possibleValues:
+          type: array
+          description: >
+            Allowed values for properties that have a fixed set of coded values.
+            Omitted when the property accepts arbitrary values.
+          items:
+            type: string
+      required:
+        - property
+        - type
+
+    Type:
+      type: string
+      description: GeoServer-compatible WFS type (XSD scalar or GML geometry)
+      example: xsd:string
+
+    Error:
+      type: object
+      description: Standard error response
+      properties:
+        code:
+          type: integer
+          example: 404
         message:
           type: string
-    resource:
-      type: object
+          example: Layer not found
       required:
-        - id
-        - name
-        - description
-      properties:
-        id:
-          type: number
-          format: int64
-        name:
-          type: string
-        description:
-          type: string
-    anotherResource:
-      type: object
-      required:
-        - kind
-        - isAlive
-      properties:
-        kind:
-          type: string
-        isAlive:
-          type: boolean
+        - code
+        - message
