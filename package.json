@@ -20,7 +20,7 @@
     "@map-colonies/commitlint-config": "^2.0.0",
     "husky": "^9.1.7",
     "ts-jest": "^29.2.6",
-    "typescript": "^5.9.3"
+    "typescript": "^7.0.2"
   },
   "dependencies": {
     "@map-colonies/schemas": "1.25.1",
