@@ -1,6 +1,6 @@
 {
   "name": "vector-standard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "build": "npx lerna run build",
     "prepare": "node -e \"if (process.env.NODE_ENV !== 'production'){process.exit(1)} \" || husky install"
