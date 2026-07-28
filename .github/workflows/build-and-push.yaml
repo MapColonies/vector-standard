@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing git tag to build and push (e.g. v1.0.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -11,6 +17,7 @@ permissions:
 
 env:
   DOMAIN: vector
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
 
 jobs:
   push-docker-image:
@@ -30,6 +37,8 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
 
       - name: Login to Azure Container Registry
         uses: docker/login-action@v3
@@ -45,7 +54,7 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ secrets.ACR_URL }}/${{ env.DOMAIN }}/${{ matrix.image }}:${{ github.ref_name }}
+          tags: ${{ secrets.ACR_URL }}/${{ env.DOMAIN }}/${{ matrix.image }}:${{ env.TAG }}
 
       - name: Update Docker Image in artifacts.json
         uses: MapColonies/shared-workflows/actions/update-artifacts-file@update-artifacts-file-v1
@@ -53,7 +62,7 @@ jobs:
           domain: ${{ env.DOMAIN }}
           type: docker
           artifact_name: ${{ matrix.image }}
-          artifact_tag: ${{ github.ref_name }} # Using the git tag directly
+          artifact_tag: ${{ env.TAG }}
           registry: ${{ secrets.ACR_URL }}
           github_token: ${{ secrets.GH_PAT }}
 
@@ -63,12 +72,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
 
       - name: Remove v from the tag
         id: remove_v
-        run: |
-          TAG=${{ github.ref_name }}
-          echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${TAG#v}" >> $GITHUB_OUTPUT
 
       - name: Push Chart to ACR
         uses: appany/helm-oci-chart-releaser@v0.5.0
@@ -80,7 +89,7 @@ jobs:
           registry: ${{ secrets.ACR_URL }}
           registry_username: ${{ secrets.ACR_PUSH_USER }}
           registry_password: ${{ secrets.ACR_PUSH_TOKEN }}
-          update_dependencies: 'true' # Defaults to false
+          update_dependencies: 'true'
 
       - name: Update Helm Package in artifacts.json
         uses: MapColonies/shared-workflows/actions/update-artifacts-file@update-artifacts-file-v1
