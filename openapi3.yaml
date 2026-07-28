@@ -2,14 +2,12 @@ openapi: 3.0.3
 info:
   title: Layers & Specs API
   description: >
-    API for retrieving geographic layer specifications.
-    Layers expose a set of properties; `enum`-typed properties
-    also carry their list of allowed values.
+    API for retrieving geographic layer specifications. Layers expose a set of
+    properties; `enum`-typed properties also carry their list of allowed values.
   version: 1.0.0
   license:
     name: Proprietary
     url: https://example.com/licenses/proprietary
-
 paths:
   /layers:
     get:
@@ -21,7 +19,6 @@ paths:
           $ref: '#/components/responses/LayerListResponse'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /layers/{layerName}:
     get:
       summary: Get layer spec by name
@@ -34,10 +31,7 @@ paths:
           $ref: '#/components/responses/LayerSpecResponse'
         '404':
           $ref: '#/components/responses/NotFound'
-
 components:
-  # ─── Parameters ──────────────────────────────────────────────────────────────
-
   parameters:
     LayerNameParam:
       name: layerName
@@ -47,9 +41,6 @@ components:
       schema:
         type: string
         example: buildings_polygon
-
-  # ─── Responses ───────────────────────────────────────────────────────────────
-
   responses:
     LayerListResponse:
       description: A list of layers with their display aliases
@@ -63,7 +54,6 @@ components:
                 alias: Buildings
               - layerName: fences_line
                 alias: Fences
-
     LayerSpecResponse:
       description: Full layer specification including its properties
       content:
@@ -86,16 +76,12 @@ components:
                 alias: Number of Floors
               - property: geom
                 type: gml:PolygonPropertyType
-
     NotFound:
       description: The requested resource was not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
-  # ─── Schemas ─────────────────────────────────────────────────────────────────
-
   schemas:
     LayerSummary:
       type: object
@@ -112,7 +98,6 @@ components:
       required:
         - layerName
         - alias
-
     LayerList:
       type: object
       description: Response wrapper for the list of layers.
@@ -123,12 +108,11 @@ components:
             $ref: '#/components/schemas/LayerSummary'
       required:
         - layers
-
     LayerSpec:
       type: object
       description: >
-        A layer and all of its properties.
-        Groups rows from the `Property` entity by `layerName`.
+        A layer and all of its properties. Groups rows from the `Property`
+        entity by `layerName`.
       properties:
         layerName:
           type: string
@@ -146,14 +130,13 @@ components:
         - layerName
         - alias
         - properties
-
     Property:
       type: object
       description: >
-        A single property definition for a layer.
-        Mirrors the `Property` entity, minus `id` and `layerName`
-        (which are implicit on the parent `LayerSpec`).
-        When the property has coded/enumerated values, `possibleValues` is populated.
+        A single property definition for a layer. Mirrors the `Property` entity,
+        minus `id` and `layerName` (which are implicit on the parent
+        `LayerSpec`). When the property has coded/enumerated values,
+        `possibleValues` is populated.
       properties:
         property:
           type: string
@@ -175,12 +158,10 @@ components:
       required:
         - property
         - type
-
     Type:
       type: string
       description: GeoServer-compatible WFS type (XSD scalar or GML geometry)
       example: xsd:string
-
     Error:
       type: object
       description: Standard error response
