@@ -1,0 +1,83 @@
+{
+  "configManagement": {
+    "offlineMode": true,
+    "name": "standard-synchronizer"
+  },
+  "layersFile": "./config/layers.json",
+  "aliasesFile": "./config/aliases.json",
+  "schedule": "*/1 * * * *",
+  "indexNameFormat": "{layerName}_{column}_idx",
+  "enrichment": {
+    "enabled": false
+  },
+  "dbs": {
+    "source": {
+      "type": "postgres",
+      "host": "localhost",
+      "port": 5432,
+      "username": "postgres",
+      "password": "postgres",
+      "database": "postgres",
+      "ssl": {
+        "enabled": false
+      },
+      "schema": "query"
+    },
+    "destination": {
+      "type": "postgres",
+      "host": "localhost",
+      "port": 5432,
+      "username": "postgres",
+      "password": "postgres",
+      "database": "postgres",
+      "ssl": {
+        "enabled": false
+      },
+      "schema": "public"
+    },
+    "s3": {
+      "endpoint": "http://s3:9000",
+      "accessKeyId": "key",
+      "secretAccessKey": "keySecret",
+      "forcePathStyle": true,
+      "region": "local",
+      "bucket": "vector-query-example",
+      "fileName": "mock-query.lua",
+      "layersVariable": "layers",
+      "aliasFieldName": "alias",
+      "idFieldName": "id",
+      "nameFieldName": "name"
+    }
+  },
+  "openapiConfig": {
+    "filePath": "./openapi3.yaml",
+    "basePath": "/docs",
+    "rawPath": "/api",
+    "uiPath": "/api"
+  },
+  "telemetry": {
+    "metrics": {},
+    "tracing": {
+      "isEnabled": false
+    },
+    "shared": {},
+    "logger": {
+      "level": "info",
+      "prettyPrint": false
+    }
+  },
+  "server": {
+    "port": 8080,
+    "request": {
+      "payload": {
+        "limit": "1mb"
+      }
+    },
+    "response": {
+      "compression": {
+        "enabled": true,
+        "options": null
+      }
+    }
+  }
+}

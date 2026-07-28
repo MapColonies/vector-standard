@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@tests/*": ["./tests/*"],
+      "@common/*": ["./src/common/*"],
+      "@openapi": ["./src/openapi"],
+      "@db": ["../db/dist/index", "../../db/dist"]
+    }
+  },
+  "references": [{ "path": "../db" }],
+  "exclude": ["tests"]
+}

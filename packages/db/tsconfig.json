@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "nodenext",
+      "moduleResolution": "nodenext"
+    }
+  },
+  "include": ["src", "dataSource"],
+  "exclude": ["node_modules", "dist"]
+}

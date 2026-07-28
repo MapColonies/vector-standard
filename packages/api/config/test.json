@@ -1,0 +1,13 @@
+{
+  "openapiConfig": {
+    "filePath": "../../openapi3.yaml"
+  },
+  "db": {
+    "host": "localhost",
+    "port": 5432,
+    "username": "postgres",
+    "password": "postgres",
+    "database": "postgres",
+    "synchronize": true
+  }
+}

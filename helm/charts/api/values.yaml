@@ -1,0 +1,106 @@
+enabled: true
+replicaCount: 1
+revisionHistoryLimit: 5
+initialDelaySeconds: 60
+
+nameOverride: ""
+fullnameOverride: ""
+
+cloudProvider:
+  dockerRegistryUrl: ""
+  imagePullSecretName: ""
+
+image:
+  repository: standard-api
+  pullPolicy: Always
+  tag: "v1.0.0"
+
+startupProbe:
+  enabled: true
+  periodSeconds: 10
+  timeoutSeconds: 5
+  # failureThreshold * periodSeconds = max startup wait (30 * 10s = 300s)
+  failureThreshold: 30
+
+livenessProbe:
+  enabled: true
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  path: /liveness
+
+env:
+  port: 80
+  targetPort: 8080
+  protocol: TCP
+  logLevel: info
+  logPrettyPrintEnabled: false
+  responseCompressionEnabled: true
+  requestPayloadLimit: 1mb
+  tracing:
+    enabled: false
+    url: http://localhost:4318/v1/traces
+    ratio: 1
+  metrics:
+    enabled: false
+    url: http://localhost:55681/v1/metrics
+db:
+  host: localhost
+  port: 5432
+  username: postgres
+  password: postgres
+  database: postgres
+  schema: public
+  type: postgres
+  sslAuth:
+    enabled: false
+    secretName: secret-name
+    cert: ""
+    key: ""
+    root: ""
+
+caSecretName: ''
+caPath: '/usr/local/share/ca-certificates'
+caKey: 'ca.crt'
+
+resources:
+  enabled: true
+  value:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+route:
+  enabled: true
+  host: "" 
+  path: /
+  timeout:
+    enabled: true # defaults to 30s by openshift
+    duration: 900s # supported units (us, ms, s, m, h, d)
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+
+service:
+  nodePort: 30080
+
+mclabels:
+  owner: vector
+  partOf: vector-standard
+  component: backend
+  logScraping: false
+  prometheus:
+    enabled: false
+    port: 8080
+    path: /metrics

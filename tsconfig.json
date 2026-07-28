@@ -1,14 +1,19 @@
 {
-  "extends": "@map-colonies/tsconfig/tsconfig-app",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@src/*": ["src/*"],
-      "@tests/*": ["tests/*"],
-      "@common/*": ["src/common/*"],
-      "@openapi": ["src/openapi"]
-    }
-  },
-  "include": ["src", "tests"],
-  "exclude": ["node_modules", "dist"]
+    "skipLibCheck": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "declaration": true,
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "sourceMap": true,
+    "declarationMap": true,
+    "noEmit": true,
+    "resolveJsonModule": true
+  }
 }

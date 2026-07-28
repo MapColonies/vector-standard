@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "outDir": "dist",
+    "typeRoots": ["./node_modules/@types", "../../node_modules/@types"],
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@tests/*": ["./tests/*"],
+      "@common/*": ["./src/common/*"],
+      "@openapi": ["./src/openapi"],
+      "@db": ["../db"]
+    }
+  },
+  "include": ["src", "tests", "instrumentation.mts"],
+  "exclude": ["node_modules", "dist"]
+}

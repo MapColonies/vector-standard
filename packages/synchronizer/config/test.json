@@ -1,0 +1,16 @@
+{
+  "dbs": {
+    "source": {
+      "schema": "test_source"
+    },
+    "destination": {
+      "schema": "test_dest"
+    }
+  },
+  "enrichmentApi": {
+    "enabled": true,
+    "api": "https://example.com/{layerName}",
+    "propertiesPath": "fields_list",
+    "aliasField": "display_name"
+  }
+}

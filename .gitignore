@@ -112,4 +112,7 @@ dist
 jest_html_reporters.html
 reports
 
-config/local*.json
+**/config/local*.json
+
+myvalues.yaml
+.claudeignore
