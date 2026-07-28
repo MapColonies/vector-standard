@@ -15,7 +15,22 @@ env:
 jobs:
   push-docker-image:
     runs-on: ubuntu-latest
+
+    strategy:
+      max-parallel: 1
+      matrix:
+        include:
+          - package: api
+            dockerfile: ./packages/api/Dockerfile
+            image: standard-api
+          - package: synchronizer
+            dockerfile: ./packages/synchronizer/Dockerfile
+            image: standard-synchronizer
+
     steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v5
+
       - name: Login to Azure Container Registry
         uses: docker/login-action@v3
         with:
@@ -27,15 +42,17 @@ jobs:
         id: build_and_push
         uses: docker/build-push-action@v6
         with:
+          context: .
+          file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ secrets.ACR_URL }}/${{ env.DOMAIN }}/${{ github.event.repository.name }}:${{ github.ref_name }}
+          tags: ${{ secrets.ACR_URL }}/${{ env.DOMAIN }}/${{ matrix.image }}:${{ github.ref_name }}
 
       - name: Update Docker Image in artifacts.json
         uses: MapColonies/shared-workflows/actions/update-artifacts-file@update-artifacts-file-v1
         with:
           domain: ${{ env.DOMAIN }}
           type: docker
-          artifact_name: ${{ github.event.repository.name }}
+          artifact_name: ${{ matrix.image }}
           artifact_tag: ${{ github.ref_name }} # Using the git tag directly
           registry: ${{ secrets.ACR_URL }}
           github_token: ${{ secrets.GH_PAT }}
