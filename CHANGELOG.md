@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/MapColonies/vector-standard/compare/v1.0.1...v1.1.0) (2026-08-02)
+
+
+### Features
+
+* add column checkup first ([585fe74](https://github.com/MapColonies/vector-standard/commit/585fe74a282705f61450acb380830231f71beeb2))
+* add column checkup first (MAPCO-11260) ([3ff615d](https://github.com/MapColonies/vector-standard/commit/3ff615df1d9f3c63a1e2801a6c0f8ac526cc0b2b))
+
 ## [1.0.1](https://github.com/MapColonies/vector-standard/compare/v1.0.0...v1.0.1) (2026-07-28)
 
 

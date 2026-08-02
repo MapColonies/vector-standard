@@ -4,7 +4,7 @@ info:
   description: >
     API for retrieving geographic layer specifications. Layers expose a set of
     properties; `enum`-typed properties also carry their list of allowed values.
-  version: 1.0.1
+  version: 1.1.0
   license:
     name: Proprietary
     url: https://example.com/licenses/proprietary
