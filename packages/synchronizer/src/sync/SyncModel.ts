@@ -265,10 +265,28 @@ export class SyncModel {
     }
   }
 
+  public async existingEnumColumns(layer: LayerEnums): Promise<string[]> {
+    if (layer.enums.length === 0) {
+      return [];
+    }
+
+    const tableColumns = new Set((await this.getTableColumns(layer.layerName)).map((column) => column.columnName));
+    const existing = layer.enums.filter((col) => tableColumns.has(col));
+
+    if (existing.length !== layer.enums.length) {
+      const missing = layer.enums.filter((col) => !tableColumns.has(col));
+      this.logger.warn({ layerName: layer.layerName, columns: missing }, 'Enum columns do not exist in table, skipping');
+    }
+
+    return existing;
+  }
+
   public async syncEnum(layer: LayerEnums): Promise<number> {
     return startActivePromisifiedSpan(SyncSpanName.SYNC_ENUM, { [SyncAttributes.LAYER_NAME]: layer.layerName }, contextAPI.active(), async (span) => {
-      await this.ensureEnumIndexes(layer);
-      const enumValuesByColumn = await this.getEnumDistinctValues(layer);
+      const existingLayer: LayerEnums = { layerName: layer.layerName, enums: await this.existingEnumColumns(layer) };
+
+      await this.ensureEnumIndexes(existingLayer);
+      const enumValuesByColumn = await this.getEnumDistinctValues(existingLayer);
 
       const entities = [...enumValuesByColumn.entries()].flatMap(([col, values]) =>
         values.map((value) => this.enumsRepository.create({ layerName: layer.layerName, property: col, value }))
