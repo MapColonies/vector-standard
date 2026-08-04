@@ -541,14 +541,14 @@ describe('DAL', function () {
     describe('syncProperties', function () {
       it('should skip columns with unsupported types and still sync the rest', async function () {
         await sourceDataSource.query(`
-          ALTER TABLE "${sourceSchema}"."${TEST_LAYER}" ADD COLUMN count integer
+          ALTER TABLE "${sourceSchema}"."${TEST_LAYER}" ADD COLUMN lsn pg_lsn
         `);
 
         const affected = await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
 
         expect(affected).toBeGreaterThan(0);
-        expect(properties.find((p) => p.property === 'count')).toBeUndefined();
+        expect(properties.find((p) => p.property === 'lsn')).toBeUndefined();
         expect(properties.find((p) => p.property === 'id')).toBeDefined();
       });
     });
