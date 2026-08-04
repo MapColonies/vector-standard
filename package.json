@@ -23,7 +23,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-7a16442d5a02834556d556274900dbe792311075.tgz",
+    "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-4b2c908bb50bda87cd8081773704a9718de4c2e6.tgz",
     "lerna": "^6.6.2"
   }
 }
