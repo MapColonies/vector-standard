@@ -31,7 +31,7 @@
     "@map-colonies/tracing": "^1.0.0",
     "@map-colonies/tracing-utils": "^1.0.0",
     "@opentelemetry/api": "^1.9.1",
-    "@smithy/node-http-handler": "^4.7.6",
+    "@smithy/node-http-handler": "^4.9.13",
     "axios": "^1.7.0",
     "express": "^5.2.1",
     "node-cron": "^4.2.1",
