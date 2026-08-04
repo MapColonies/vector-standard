@@ -25,7 +25,8 @@ import {
   TableColumnsQueryError,
 } from './errors';
 import { fetchPropertyAliases } from './aliasEnricher';
-import { FileReader } from './fileReader';
+import type { FileAliases } from './fileReader';
+import type { TypeMap } from './typeMap';
 import { LuaLayer, parseLuaLayers } from './luaParser';
 
 export interface ColumnInfo {
@@ -42,8 +43,7 @@ export class SyncModel {
     @inject(LAYER_REPOSITORY_SYMBOL) private readonly layerRepository: Repository<Layer>,
     @inject(PROPERTY_REPOSITORY_SYMBOL) private readonly propertyRepository: Repository<Property>,
     @inject(ENUMS_REPOSITORY_SYMBOL) private readonly enumsRepository: Repository<EnumValue>,
-    private readonly luaRepository: S3Repository,
-    private readonly fileReader: FileReader
+    private readonly luaRepository: S3Repository
   ) {}
 
   public async syncLayer(layerName: string, layerId: number, alias?: string): Promise<void> {
@@ -146,13 +146,13 @@ export class SyncModel {
     });
   }
 
-  public async syncProperties(layer: LayerEnums, layerId: number): Promise<number> {
+  public async syncProperties(layer: LayerEnums, layerId: number, typeMap: TypeMap, fileAliases: FileAliases): Promise<number> {
     return startActivePromisifiedSpan(
       SyncSpanName.SYNC_PROPERTIES,
       { [SyncAttributes.LAYER_NAME]: layer.layerName, [SyncAttributes.LAYER_ID]: layerId },
       contextAPI.active(),
       async (span) => {
-        const properties = columnInfosToProperties(await this.getTableColumns(layer.layerName), layer.layerName, (columnName, udtName) => {
+        const properties = columnInfosToProperties(await this.getTableColumns(layer.layerName), layer.layerName, typeMap, (columnName, udtName) => {
           this.logger.warn({ layerName: layer.layerName, columnName, udtName }, 'Unknown column type, skipping property');
         });
 
@@ -168,9 +168,8 @@ export class SyncModel {
             );
           }
         }
-        const allFileAliases = await this.fileReader.readAliases(this.config.get('aliasesFile'));
-        const globalAliases = allFileAliases.get('*') ?? new Map<string, string>();
-        const layerAliases = allFileAliases.get(layer.layerName) ?? new Map<string, string>();
+        const globalAliases = fileAliases.get('*') ?? new Map<string, string>();
+        const layerAliases = fileAliases.get(layer.layerName) ?? new Map<string, string>();
         const aliases = new CaseInsensitiveMap([...apiAliases, ...globalAliases, ...layerAliases]);
 
         for (const property of properties) {

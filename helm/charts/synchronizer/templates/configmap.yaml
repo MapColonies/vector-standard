@@ -36,6 +36,10 @@ data:
 
   ALIASES_FILE_PATH: {{ .Values.env.aliasesFile | quote }}
 
+  {{- if .Values.typeMap.enabled }}
+  TYPE_MAP_FILE_PATH: {{ .Values.env.typeMapFile | quote }}
+  {{- end }}
+
   {{- with .Values.dbs.s3 }}
   S3_ENDPOINT: {{ .endpoint | quote }}
   S3_REGION: {{ .region | quote }}
@@ -54,6 +58,7 @@ data:
   ENRICHMENT_API_URL: {{ .api | quote }}
   ENRICHMENT_PROPERTIES_PATH: {{ .propertiesPath | quote }}
   ENRICHMENT_ALIAS_FIELD: {{ .aliasField | quote }}
+  ENRICHMENT_REQUEST_TIMEOUT_MILLISECONDS: {{ .requestTimeoutMilliseconds | quote }}
   {{- end }}
   {{- end }}
   {{- include "synchronizer.dbEnvBlock" (dict "prefix" "SOURCE_DB" "db" .Values.dbs.sourceDb) | nindent 2 }}

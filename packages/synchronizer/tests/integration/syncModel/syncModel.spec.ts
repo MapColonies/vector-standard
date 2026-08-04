@@ -21,9 +21,13 @@ import { SERVICES, SOURCE_DATA_SOURCE_PROVIDER } from '@src/common/constants';
 import { S3Repository } from '@src/common/s3/s3Repository';
 import { SyncModel } from '@src/sync/SyncModel';
 import { schemaOf } from '@src/sync/helpers';
+import { FileReader, type FileAliases } from '@src/sync/fileReader';
+import type { TypeMap } from '@src/sync/typeMap';
 
 const TEST_LAYER = 'test_layer';
 const ENRICHMENT_ORIGIN = 'http://mock-api';
+const TYPE_MAP_FILE = './config/typeMap.json';
+const noAliases: FileAliases = new Map();
 
 const mockEnrichmentApi = (responseBody: object, statusCode = 200): nock.Scope =>
   nock(ENRICHMENT_ORIGIN).get(`/${TEST_LAYER}`).reply(statusCode, responseBody);
@@ -66,6 +70,8 @@ const createDestinationSchema = async (dataSource: DataSource, schema: string): 
 describe('DAL', function () {
   let dal: SyncModel;
   let enrichedDal: SyncModel;
+  let fileReader: FileReader;
+  let typeMap: TypeMap;
   let sourceDataSource: DataSource;
   let destinationDataSource: DataSource;
   let sourceSchema: string;
@@ -88,6 +94,8 @@ describe('DAL', function () {
     });
 
     dal = container.resolve(SyncModel);
+    fileReader = container.resolve(FileReader);
+    typeMap = await fileReader.readTypeMap(TYPE_MAP_FILE);
     sourceDataSource = container.resolve<DataSource>(SOURCE_DATA_SOURCE_PROVIDER);
     destinationDataSource = container.resolve<DataSource>(DESTINATION_DATA_SOURCE_PROVIDER);
     layerRepository = container.resolve<Repository<Layer>>(LAYER_REPOSITORY_SYMBOL);
@@ -110,6 +118,7 @@ describe('DAL', function () {
                 api: 'http://mock-api/{layerName}',
                 propertiesPath: 'fields_list',
                 aliasField: 'display_name',
+                requestTimeoutMilliseconds: 10000,
               };
             }
             return target.get(key);
@@ -236,7 +245,7 @@ describe('DAL', function () {
 
     describe('syncProperties', function () {
       it('should upsert all columns from the source table into the property repository', async function () {
-        const affected = await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        const affected = await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
 
@@ -254,7 +263,7 @@ describe('DAL', function () {
       });
 
       it('should mark enum columns with columnType.enum', async function () {
-        await dal.syncProperties({ layerName: TEST_LAYER, enums: ['category', 'name'] }, 1);
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: ['category', 'name'] }, 1, typeMap, noAliases);
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
         const categoryProp = properties.find((p) => p.property === 'category');
@@ -267,8 +276,8 @@ describe('DAL', function () {
       });
 
       it('should upsert on subsequent calls without duplicating rows', async function () {
-        await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
-        await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
         const uniqueProps = new Set(properties.map((p) => p.property));
@@ -281,7 +290,7 @@ describe('DAL', function () {
         ALTER TABLE "${sourceSchema}"."${TEST_LAYER}" ADD COLUMN geom_param geometry(Point,4326)
       `);
 
-        await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
         const geomProp = properties.find((p) => p.property === 'geom_param');
@@ -295,7 +304,7 @@ describe('DAL', function () {
         await sourceDataSource.query(`
           INSERT INTO "${sourceSchema}"."${TEST_LAYER}" (category) VALUES ('A'), ('B'), ('A'), ('C')
         `);
-        await dal.syncProperties({ layerName: TEST_LAYER, enums: ['category'] }, 1);
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: ['category'] }, 1, typeMap, noAliases);
 
         const affected = await dal.syncEnum({ layerName: TEST_LAYER, enums: ['category'] });
 
@@ -307,7 +316,7 @@ describe('DAL', function () {
       });
 
       it('should create an index on the enum column in the source table', async function () {
-        await dal.syncProperties({ layerName: TEST_LAYER, enums: ['category'] }, 1);
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: ['category'] }, 1, typeMap, noAliases);
         await dal.syncEnum({ layerName: TEST_LAYER, enums: ['category'] });
 
         const indexName = `${TEST_LAYER}_category_idx`;
@@ -329,7 +338,7 @@ describe('DAL', function () {
           },
         });
 
-        await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
         const nameProp = properties.find((p) => p.property === 'name');
@@ -345,7 +354,7 @@ describe('DAL', function () {
       it('should call the enrichment API once with the resolved layer URL', async function () {
         const scope = mockEnrichmentApi({ fields_list: {} });
 
-        await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
 
         expect(scope.isDone()).toBe(true);
       });
@@ -353,21 +362,28 @@ describe('DAL', function () {
 
     describe('syncProperties with file aliases', function () {
       let tmpDir: string;
+      let aliasesFilePath: string;
       let aliasesFileDal: SyncModel;
       let bothDal: SyncModel;
 
       beforeAll(async function () {
         tmpDir = mkdtempSync(join(tmpdir(), 'dal-aliases-test-'));
+        aliasesFilePath = join(tmpDir, 'aliases.json');
 
         const makeConfig = (enrichmentEnabled: boolean) =>
           new Proxy(getConfig(), {
             get(target, prop) {
               if (prop === 'get') {
                 return (key: string) => {
-                  if (key === 'aliasesFile') return join(tmpDir, 'aliases.json');
                   if (key === 'enrichment') {
                     return enrichmentEnabled
-                      ? { enabled: true as const, api: 'http://mock-api/{layerName}', propertiesPath: 'fields_list', aliasField: 'display_name' }
+                      ? {
+                          enabled: true as const,
+                          api: 'http://mock-api/{layerName}',
+                          propertiesPath: 'fields_list',
+                          aliasField: 'display_name',
+                          requestTimeoutMilliseconds: 10000,
+                        }
                       : { enabled: false };
                   }
                   return target.get(key);
@@ -405,9 +421,9 @@ describe('DAL', function () {
       });
 
       it('should apply aliases from the file when enrichment is disabled', async function () {
-        writeFileSync(join(tmpDir, 'aliases.json'), JSON.stringify({ [TEST_LAYER]: { name: 'File Name', height: 'File Height' } }));
+        writeFileSync(aliasesFilePath, JSON.stringify({ [TEST_LAYER]: { name: 'File Name', height: 'File Height' } }));
 
-        await aliasesFileDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await aliasesFileDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, await fileReader.readAliases(aliasesFilePath));
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
 
@@ -417,13 +433,13 @@ describe('DAL', function () {
       });
 
       it('should override API aliases with file aliases for the same property', async function () {
-        writeFileSync(join(tmpDir, 'aliases.json'), JSON.stringify({ [TEST_LAYER]: { name: 'File Name' } }));
+        writeFileSync(aliasesFilePath, JSON.stringify({ [TEST_LAYER]: { name: 'File Name' } }));
 
         mockEnrichmentApi({
           fields_list: { name: { display_name: 'API Name', type: 'TEXT' }, height: { display_name: 'API Height', type: 'REAL' } },
         });
 
-        await bothDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await bothDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, await fileReader.readAliases(aliasesFilePath));
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
 
@@ -432,11 +448,11 @@ describe('DAL', function () {
       });
 
       it('should fill in aliases from the file for properties absent from the API response', async function () {
-        writeFileSync(join(tmpDir, 'aliases.json'), JSON.stringify({ [TEST_LAYER]: { height: 'File Height' } }));
+        writeFileSync(aliasesFilePath, JSON.stringify({ [TEST_LAYER]: { height: 'File Height' } }));
 
         mockEnrichmentApi({ fields_list: { name: { display_name: 'API Name', type: 'TEXT' } } });
 
-        await bothDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await bothDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, await fileReader.readAliases(aliasesFilePath));
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
 
@@ -495,7 +511,7 @@ describe('DAL', function () {
       it('should leave alias unset for properties absent from the enrichment response', async function () {
         mockEnrichmentApi({ fields_list: { name: { display_name: 'Layer Name', type: 'TEXT' } } });
 
-        await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
         const idProp = properties.find((p) => p.property === 'id');
@@ -507,7 +523,7 @@ describe('DAL', function () {
       it('should sync properties without aliases when the enrichment API returns an error response', async function () {
         mockEnrichmentApi({}, 500);
 
-        const affected = await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        const affected = await enrichedDal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
 
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
         const idProp = properties.find((p) => p.property === 'id');
@@ -528,7 +544,7 @@ describe('DAL', function () {
           ALTER TABLE "${sourceSchema}"."${TEST_LAYER}" ADD COLUMN count integer
         `);
 
-        const affected = await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1);
+        const affected = await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
         const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
 
         expect(affected).toBeGreaterThan(0);
