@@ -12,7 +12,7 @@ import { ConfigType } from '@common/config';
 import { InsertPropertyDTO, LayerEnums } from '@src/common/interfaces';
 import { S3Repository } from '@src/common/s3/s3Repository';
 import { CaseInsensitiveMap } from '@src/common/caseInsensitiveMap';
-import { columnInfosToProperties, schemaOf } from './helpers';
+import { columnInfosToProperties, excludedPropertySet, schemaOf } from './helpers';
 import {
   EnumDistinctValuesError,
   EnumIndexError,
@@ -152,7 +152,13 @@ export class SyncModel {
       { [SyncAttributes.LAYER_NAME]: layer.layerName, [SyncAttributes.LAYER_ID]: layerId },
       contextAPI.active(),
       async (span) => {
-        const properties = columnInfosToProperties(await this.getTableColumns(layer.layerName), layer.layerName, typeMap, (columnName, udtName) => {
+        const excluded = excludedPropertySet(layer.excludeProperties);
+        const columns = (await this.getTableColumns(layer.layerName)).filter(({ columnName }) => !excluded.has(columnName.toLowerCase()));
+        if (excluded.size > 0) {
+          this.logger.debug({ layerName: layer.layerName, excludeProperties: layer.excludeProperties }, 'Excluding properties from sync');
+        }
+
+        const properties = columnInfosToProperties(columns, layer.layerName, typeMap, (columnName, udtName) => {
           this.logger.warn({ layerName: layer.layerName, columnName, udtName }, 'Unknown column type, skipping property');
         });
 

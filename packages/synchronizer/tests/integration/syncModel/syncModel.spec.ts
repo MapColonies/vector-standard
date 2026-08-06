@@ -285,6 +285,27 @@ describe('DAL', function () {
         expect(properties).toHaveLength(uniqueProps.size);
       });
 
+      it('should not sync properties listed in excludeProperties', async function () {
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: [], excludeProperties: ['height', 'CREATED_AT'] }, 1, typeMap, noAliases);
+
+        const properties = await propertyRepository.find({ where: { layerName: TEST_LAYER } });
+        const names = properties.map((p) => p.property);
+
+        expect(names).not.toContain('height');
+        expect(names).not.toContain('created_at');
+        expect(names).toEqual(expect.arrayContaining(['id', 'name', 'active', 'shape']));
+      });
+
+      it('should delete properties that were synced before being excluded', async function () {
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: [] }, 1, typeMap, noAliases);
+
+        await dal.syncProperties({ layerName: TEST_LAYER, enums: [], excludeProperties: ['height'] }, 1, typeMap, noAliases);
+
+        const heightProp = await propertyRepository.findOne({ where: { layerName: TEST_LAYER, property: 'height' } });
+
+        expect(heightProp).toBeNull();
+      });
+
       it('should normalize a parameterized geometry column to columnType.geom', async function () {
         await sourceDataSource.query(`
         ALTER TABLE "${sourceSchema}"."${TEST_LAYER}" ADD COLUMN geom_param geometry(Point,4326)

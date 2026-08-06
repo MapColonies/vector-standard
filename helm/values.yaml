@@ -17,7 +17,7 @@ mclabels: &mclabels
     path: /metrics
 
 cloudProvider:
-  flavor: openshift
+  flavor: &cloudProviderFlavor openshift
   dockerRegistryUrl: &dockerRegistryUrl ''
   imagePullSecretName: &pullSecret ''
 
@@ -44,13 +44,14 @@ api:
   initialDelaySeconds: 60
 
   cloudProvider:
+    flavor: *cloudProviderFlavor
     dockerRegistryUrl: *dockerRegistryUrl
     imagePullSecretName: *pullSecret
 
   image:
     repository: standard-api
     pullPolicy: Always
-    tag: "v1.0.0"
+    tag: "v1.1.0"
 
   startupProbe:
     enabled: true
@@ -153,13 +154,14 @@ synchronizer:
     path: /liveness
 
   cloudProvider:
+    flavor: *cloudProviderFlavor
     dockerRegistryUrl: *dockerRegistryUrl
     imagePullSecretName: *pullSecret
 
   image:
     repository: standard-synchronizer
     pullPolicy: Always
-    tag: "v1.0.0"
+    tag: "v1.2.0"
 
   layers:
   - layerName: buildings_polygon
@@ -167,7 +169,7 @@ synchronizer:
 
   aliases:
     "*":
-      number_of_floors: "number_of_floors"
+      num_floors: "number_of_floors"
 
   typeMap:
     enabled: false

@@ -1,6 +1,7 @@
 [
   {
     "layerName": "buildings_polygon",
+    "excludeProperties": ["id"],
     "enums": ["code", "attribute"]
   }
 ]

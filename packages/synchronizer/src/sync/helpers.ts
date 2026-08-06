@@ -41,6 +41,10 @@ export const isJsonObject = (value: JsonValue | undefined): value is JsonObject 
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
+export const excludedPropertySet = (excludeProperties?: string[]): ReadonlySet<string> => {
+  return new Set((excludeProperties ?? []).map((property) => property.toLowerCase()));
+};
+
 export const schemaOf = (dataSource: DataSource): string => {
   const options = dataSource.options;
   return 'schema' in options && typeof options.schema === 'string' ? options.schema : 'public';
