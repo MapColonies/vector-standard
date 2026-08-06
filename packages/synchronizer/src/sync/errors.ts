@@ -54,6 +54,12 @@ export class StaleEnumValuesDeletionError extends SyncError {
   }
 }
 
+export class TypeMapError extends SyncError {
+  public constructor(filePath: string, reason: string, cause?: unknown) {
+    super(`Invalid type map file ${filePath}: ${reason}`, { cause });
+  }
+}
+
 export class EnumSaveError extends SyncError {
   public constructor(layerName: string, cause?: unknown) {
     super(`Failed to save enum values for ${layerName}`, { cause });

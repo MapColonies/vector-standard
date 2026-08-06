@@ -1,17 +1,14 @@
 import axios from 'axios';
-import type { JsonObject, JsonValue } from 'type-fest';
+import type { JsonObject } from 'type-fest';
 import { context as contextAPI } from '@opentelemetry/api';
 import { startActivePromisifiedSpan } from '@common/tracing/util';
 import { SyncAttributes, SyncSpanName } from '@common/tracing/sync';
 import type { EnrichmentConfig } from '@src/common/interfaces';
 import { CaseInsensitiveMap } from '@src/common/caseInsensitiveMap';
+import { isJsonObject } from './helpers';
 
 const resolveTemplate = (template: string, vars: Record<string, string>): string => {
   return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? `{${key}}`);
-};
-
-export const isJsonObject = (value: JsonValue | undefined): value is JsonObject => {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 };
 
 export const resolvePath = (data: JsonObject, path: string): JsonObject | undefined => {
@@ -32,7 +29,27 @@ export const fetchPropertyAliases = async (
     contextAPI.active(),
     async (span) => {
       const url = resolveTemplate(config.api, { layerName, layerId: String(layerId) });
-      const { data } = await axios.get<JsonObject>(url);
+      span.setAttribute(SyncAttributes.ENRICHMENT_URL, url);
+      span.setAttribute(SyncAttributes.ENRICHMENT_TIMEOUT_MILLISECONDS, config.requestTimeoutMilliseconds);
+
+      let data: JsonObject;
+      try {
+        const response = await axios.get<JsonObject>(url, {
+          timeout: config.requestTimeoutMilliseconds,
+          signal: AbortSignal.timeout(config.requestTimeoutMilliseconds),
+        });
+        span.setAttribute(SyncAttributes.ENRICHMENT_STATUS_CODE, response.status);
+        data = response.data;
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          span.setAttribute(SyncAttributes.ENRICHMENT_ERROR_CODE, err.code ?? 'unknown');
+          if (err.response !== undefined) {
+            span.setAttribute(SyncAttributes.ENRICHMENT_STATUS_CODE, err.response.status);
+          }
+        }
+        throw err;
+      }
+
       const propertiesMap = resolvePath(data, resolveTemplate(config.propertiesPath, { layerName }));
 
       const result = new CaseInsensitiveMap();

@@ -37,6 +37,9 @@ export class CronManager {
         span.setAttribute(SyncAttributes.LAYERS_COUNT, layers.length);
         span.setAttribute(SyncAttributes.LAYERS_CHANGED, layersChanged);
 
+        const typeMap = await this.fileReader.readTypeMap(this.config.get('typeMapFile'));
+        const fileAliases = await this.fileReader.readAliases(this.config.get('aliasesFile'));
+
         const luaLayersMap = await this.dal.luaFileData();
         for (const layer of layers) {
           const luaLayer = luaLayersMap.get(layer.layerName);
@@ -46,7 +49,7 @@ export class CronManager {
           }
           await this.dal.syncLayer(layer.layerName, luaLayer.layerId, luaLayer.alias);
           try {
-            const affected = await this.dal.syncProperties(layer, luaLayer.layerId);
+            const affected = await this.dal.syncProperties(layer, luaLayer.layerId, typeMap, fileAliases);
             this.logger.info({ layer, affected }, 'synced properties');
           } catch (err) {
             this.logger.warn({ layerName: layer.layerName, err }, 'failed to sync properties, skipping to enum sync');

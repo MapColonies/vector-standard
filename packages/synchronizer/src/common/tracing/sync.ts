@@ -20,6 +20,10 @@ export const SyncAttributes = {
   PROPERTIES_AFFECTED: 'properties.affected',
   ENUMS_AFFECTED: 'enums.affected',
   ALIASES_COUNT: 'aliases.count',
+  ENRICHMENT_URL: 'enrichment.url',
+  ENRICHMENT_TIMEOUT_MILLISECONDS: 'enrichment.timeout_ms',
+  ENRICHMENT_STATUS_CODE: 'enrichment.status_code',
+  ENRICHMENT_ERROR_CODE: 'enrichment.error_code',
 } as const;
 
 export type SyncAttributes = (typeof SyncAttributes)[keyof typeof SyncAttributes];
