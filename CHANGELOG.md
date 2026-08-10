@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/MapColonies/vector-standard/compare/v1.1.0...v1.2.0) (2026-08-10)
+
+
+### Features
+
+* add type map and enrichment traces (MAPCO-11340) ([#24](https://github.com/MapColonies/vector-standard/issues/24)) ([9cc377b](https://github.com/MapColonies/vector-standard/commit/9cc377b4338ce849200cc89509985dc6c6bd3b58))
+
 ## [1.1.0](https://github.com/MapColonies/vector-standard/compare/v1.0.1...v1.1.0) (2026-08-02)
 
 
