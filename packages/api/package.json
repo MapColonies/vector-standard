@@ -80,7 +80,7 @@
     "supertest": "^7.2.2",
     "ts-jest": "^29.2.6",
     "tsc-alias": "^1.8.11",
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "vitest": "^4.0.18"
   },
   "workspaces": [
