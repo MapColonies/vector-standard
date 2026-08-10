@@ -6,6 +6,7 @@ export type InsertPropertyDTO = Omit<Property, 'possibleValues' | 'layerRelation
 export interface LayerEnums {
   layerName: string;
   enums: string[];
+  excludeProperties?: string[];
 }
 
 export type EnrichmentConfig = ReturnType<ConfigType['getAll']>['enrichment'];

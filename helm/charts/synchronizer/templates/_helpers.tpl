@@ -40,9 +40,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{- define "synchronizer.cloudProviderFlavor" -}}
-{{- if .Values.global.cloudProvider.flavor }}
-    {{- .Values.global.cloudProvider.flavor -}}
-{{- else if .Values.cloudProvider -}}
+{{-  if .Values.cloudProvider -}}
     {{- .Values.cloudProvider.flavor | default "minikube" -}}
 {{- else -}}
     {{ "minikube" }}
@@ -50,18 +48,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{- define "synchronizer.cloudProviderDockerRegistryUrl" -}}
-{{- if .Values.global.cloudProvider.dockerRegistryUrl }}
-    {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
-{{- else if .Values.cloudProvider.dockerRegistryUrl -}}
+{{-  if .Values.cloudProvider.dockerRegistryUrl -}}
     {{- printf "%s/" .Values.cloudProvider.dockerRegistryUrl -}}
 {{- else -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "synchronizer.cloudProviderImagePullSecretName" -}}
-{{- if .Values.global.cloudProvider.imagePullSecretName }}
-    {{- .Values.global.cloudProvider.imagePullSecretName -}}
-{{- else if .Values.cloudProvider.imagePullSecretName -}}
+{{-  if .Values.cloudProvider.imagePullSecretName -}}
     {{- .Values.cloudProvider.imagePullSecretName -}}
 {{- end -}}
 {{- end -}}

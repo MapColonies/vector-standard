@@ -96,6 +96,10 @@ spec:
               mountPath: {{ .Values.env.layersFile | dir | quote }}
             - name: aliases-config
               mountPath: {{ .Values.env.aliasesFile | dir | quote }}
+            {{- if .Values.typeMap.enabled }}
+            - name: typemap-config
+              mountPath: {{ .Values.env.typeMapFile | dir | quote }}
+            {{- end }}
             - name: s3-downloads
               mountPath: /usr/src/app/packages/synchronizer/dist/src/common/s3/downloads
             {{- if .Values.dbs.sourceDb.sslAuth.enabled }}
@@ -120,6 +124,11 @@ spec:
         - name: aliases-config
           configMap:
             name: {{ include "synchronizer.fullname" . }}-aliases
+        {{- if .Values.typeMap.enabled }}
+        - name: typemap-config
+          configMap:
+            name: {{ include "synchronizer.fullname" . }}-typemap
+        {{- end }}
         - name: s3-downloads
           emptyDir: {}
         {{- if .Values.dbs.sourceDb.sslAuth.enabled }}

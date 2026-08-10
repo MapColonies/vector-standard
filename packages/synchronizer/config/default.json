@@ -5,6 +5,7 @@
   },
   "layersFile": "./config/layers.json",
   "aliasesFile": "./config/aliases.json",
+  "typeMapFile": "./config/typeMap.json",
   "schedule": "*/1 * * * *",
   "indexNameFormat": "{layerName}_{column}_idx",
   "enrichment": {

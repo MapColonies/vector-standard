@@ -11,6 +11,7 @@
     "enabled": true,
     "api": "https://example.com/{layerName}",
     "propertiesPath": "fields_list",
-    "aliasField": "display_name"
+    "aliasField": "display_name",
+    "requestTimeoutMilliseconds": 10000
   }
 }

@@ -49,6 +49,12 @@ layers:
 
 aliases: {}
 
+typeMap:
+  enabled: false
+  data:
+    types: {}
+    geometrySubTypes: {}
+
 env:
   port: 80
   targetPort: 8080
@@ -66,11 +72,13 @@ env:
   indexNameFormat: '{layerName}_{column}_idx'
   layersFile: /usr/src/app/packages/synchronizer/dist/config/layers/layers.json
   aliasesFile: /usr/src/app/packages/synchronizer/dist/config/aliases/aliases.json
+  typeMapFile: /usr/src/app/packages/synchronizer/dist/config/typeMap/typeMap.json
   enrichment:
     enabled: false
     api: ""
     propertiesPath: ""
     aliasField: ""
+    requestTimeoutMilliseconds: 5000
 
 dbs:
   s3:

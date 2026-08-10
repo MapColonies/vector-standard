@@ -63,9 +63,7 @@ Returns the tag of the chart.
 Returns the cloud provider name.
 */}}
 {{- define "api.cloudProviderFlavor" -}}
-{{- if .Values.global.cloudProvider.flavor }}
-    {{- .Values.global.cloudProvider.flavor -}}
-{{- else if .Values.cloudProvider -}}
+{{-  if .Values.cloudProvider -}}
     {{- .Values.cloudProvider.flavor | default "minikube" -}}
 {{- else -}}
     {{ "minikube" }}
@@ -76,9 +74,7 @@ Returns the cloud provider name.
 Returns the cloud provider docker registry url.
 */}}
 {{- define "api.cloudProviderDockerRegistryUrl" -}}
-{{- if .Values.global.cloudProvider.dockerRegistryUrl }}
-    {{- printf "%s/" .Values.global.cloudProvider.dockerRegistryUrl -}}
-{{- else if .Values.cloudProvider.dockerRegistryUrl -}}
+{{- if .Values.cloudProvider.dockerRegistryUrl -}}
     {{- printf "%s/" .Values.cloudProvider.dockerRegistryUrl -}}
 {{- else -}}
 {{- end -}}
@@ -88,9 +84,7 @@ Returns the cloud provider docker registry url.
 Returns the cloud provider image pull secret name.
 */}}
 {{- define "api.cloudProviderImagePullSecretName" -}}
-{{- if .Values.global.cloudProvider.imagePullSecretName }}
-    {{- .Values.global.cloudProvider.imagePullSecretName -}}
-{{- else if .Values.cloudProvider.imagePullSecretName -}}
+{{- if .Values.cloudProvider.imagePullSecretName -}}
     {{- .Values.cloudProvider.imagePullSecretName -}}
 {{- end -}}
 {{- end -}}

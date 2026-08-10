@@ -1,9 +1,14 @@
 import { createHash } from 'node:crypto';
+import type { JsonValue } from 'type-fest';
 import { injectable } from 'tsyringe';
 import { FsRepository } from '@common/fs/fsRepository';
 import type { LayerEnums } from '@common/interfaces';
+import { parseTypeMap, type TypeMap } from './typeMap';
+import { TypeMapError } from './errors';
 
 type AliasesFile = Record<string, Record<string, string>>;
+
+export type FileAliases = Map<string, Map<string, string>>;
 
 @injectable()
 export class FileReader {
@@ -20,7 +25,19 @@ export class FileReader {
     }
   }
 
-  public async readAliases(filePath: string): Promise<Map<string, Map<string, string>>> {
+  public async readTypeMap(filePath: string): Promise<TypeMap> {
+    try {
+      const content = await this.fsRepository.readFile(filePath, 'utf-8');
+      return parseTypeMap(JSON.parse(content.toString()) as JsonValue, filePath);
+    } catch (err) {
+      if (err instanceof TypeMapError) {
+        throw err;
+      }
+      throw new TypeMapError(filePath, 'failed to read or parse the file', err);
+    }
+  }
+
+  public async readAliases(filePath: string): Promise<FileAliases> {
     try {
       const content = await this.fsRepository.readFile(filePath, 'utf-8');
       const parsed = JSON.parse(content.toString()) as AliasesFile;

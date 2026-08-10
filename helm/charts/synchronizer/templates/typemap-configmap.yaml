@@ -1,0 +1,10 @@
+{{- if and .Values.enabled .Values.typeMap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "synchronizer.fullname" . }}-typemap
+  labels:
+    {{- include "synchronizer.labels" . | nindent 4 }}
+data:
+  {{ .Values.env.typeMapFile | base }}: {{ .Values.typeMap.data | toPrettyJson | quote }}
+{{- end }}
