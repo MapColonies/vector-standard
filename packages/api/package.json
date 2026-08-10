@@ -69,7 +69,7 @@
     "@vitest/ui": "^4.0.18",
     "copyfiles": "^2.4.1",
     "cross-env": "^10.1.0",
-    "eslint": "^9.39.2",
+    "eslint": "^10.8.0",
     "eslint-plugin-jest": "^28.11.0",
     "jest-openapi": "^0.14.2",
     "lerna": "^6.6.2",
