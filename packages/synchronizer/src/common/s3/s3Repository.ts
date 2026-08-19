@@ -40,27 +40,27 @@ export class S3Repository {
     );
   }
 
-  public async downloadFile(bucket: string, key: string): Promise<string> {
+  public async downloadFile(bucket: string, fileName: string): Promise<string> {
     return startActivePromisifiedSpan(
       S3SpanName.S3_DOWNLOAD_FILE,
-      { [S3Attributes.BUCKET]: bucket, [S3Attributes.FILE_NAME]: key },
+      { [S3Attributes.BUCKET]: bucket, [S3Attributes.FILE_NAME]: fileName },
       contextAPI.active(),
       async () => {
         try {
-          this.logger.info(`Downloading ${key} file from S3 bucket ${bucket}`);
+          this.logger.info(`Downloading ${fileName} file from S3 bucket ${bucket}`);
 
-          const body = await this.getObjectWrapper(bucket, key);
+          const body = await this.getObjectWrapper(bucket, fileName);
 
-          const filePath = path.join(__dirname, 'downloads', bucket, key);
+          const filePath = path.join(__dirname, 'downloads', bucket, fileName);
           await this.fsRepository.mkdir(path.dirname(filePath));
           await this.fsRepository.writeFile(filePath, await buffer(body));
 
-          this.logger.info(`${key} file was downloaded successfully`);
+          this.logger.info(`${fileName} file was downloaded successfully`);
 
           return filePath;
         } catch (err) {
-          this.logger.error({ msg: `Failed to download ${key} file from S3 bucket ${bucket}`, err });
-          throw new Error(`Failed to download ${key} file from S3`, { cause: err });
+          this.logger.error({ msg: `Failed to download ${fileName} file from S3 bucket ${bucket}`, err });
+          throw new Error(`Failed to download ${fileName} file from S3`, { cause: err });
         }
       }
     );
