@@ -7,6 +7,8 @@ import { SERVICES } from '@src/common/constants';
 import { registerDependencies } from '@src/common/dependencyRegistration';
 
 describe('LayerManager', function () {
+  const TEST_NAMESPACE = 'data-2026';
+
   let manager: LayerManager;
 
   const find = vi.fn();
@@ -38,7 +40,7 @@ describe('LayerManager', function () {
         ];
         find.mockResolvedValue(layers);
 
-        const result = await manager.getLayers();
+        const result = await manager.getLayers(TEST_NAMESPACE);
 
         expect(result).toEqual(layers);
       });
@@ -48,9 +50,12 @@ describe('LayerManager', function () {
       it('should query using the provided layer name', async function () {
         findOne.mockResolvedValue({ layerName: 'buildings_polygon', alias: 'Buildings', properties: [] });
 
-        await manager.getLayerSpecByName('buildings_polygon');
+        await manager.getLayerSpecByName(TEST_NAMESPACE, 'buildings_polygon');
 
-        expect(findOne).toHaveBeenCalledWith({ where: { layerName: 'buildings_polygon' }, relations: { properties: { possibleValues: true } } });
+        expect(findOne).toHaveBeenCalledWith({
+          where: { layerName: 'buildings_polygon', namespace: TEST_NAMESPACE },
+          relations: { properties: { possibleValues: true } },
+        });
       });
 
       it.each([
@@ -84,7 +89,7 @@ describe('LayerManager', function () {
       ])('should $name', async function ({ inputProperties, expectedPossibleValues }) {
         findOne.mockResolvedValue({ layerName: 'buildings_polygon', alias: 'Buildings', properties: inputProperties });
 
-        const { properties } = await manager.getLayerSpecByName('buildings_polygon');
+        const { properties } = await manager.getLayerSpecByName(TEST_NAMESPACE, 'buildings_polygon');
 
         for (const { property, possibleValues } of expectedPossibleValues) {
           expect(properties.find((p: { property: string }) => p.property === property)?.possibleValues).toEqual(possibleValues);
@@ -95,12 +100,10 @@ describe('LayerManager', function () {
 
   describe('Sad Path', function () {
     describe('getLayers', function () {
-      it('should return an empty array when there are no layers', async function () {
+      it("should throw an error when the namespace doesn't exist", async function () {
         find.mockResolvedValue([]);
 
-        const result = await manager.getLayers();
-
-        expect(result).toEqual([]);
+        await expect(manager.getLayers(TEST_NAMESPACE)).rejects.toThrow();
       });
     });
 
@@ -108,7 +111,7 @@ describe('LayerManager', function () {
       it('should throw a NotFoundError when the layer does not exist', async function () {
         findOne.mockResolvedValue(null);
 
-        await expect(manager.getLayerSpecByName('nonexistent')).rejects.toThrow(NotFoundError);
+        await expect(manager.getLayerSpecByName(TEST_NAMESPACE, 'nonexistent')).rejects.toThrow(NotFoundError);
       });
     });
   });
