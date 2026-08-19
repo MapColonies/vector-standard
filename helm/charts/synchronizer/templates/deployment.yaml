@@ -93,7 +93,10 @@ spec:
           {{- end }}
           volumeMounts:
             - name: layers-config
-              mountPath: {{ .Values.env.layersFile | dir | quote }}
+              mountPath: /usr/src/app/packages/synchronizer/dist/config/layers
+            - name: namespaces-config
+              mountPath: /usr/src/app/packages/synchronizer/dist/config/production.json
+              subPath: production.json
             - name: aliases-config
               mountPath: {{ .Values.env.aliasesFile | dir | quote }}
             {{- if .Values.typeMap.enabled }}
@@ -102,10 +105,12 @@ spec:
             {{- end }}
             - name: s3-downloads
               mountPath: /usr/src/app/packages/synchronizer/dist/src/common/s3/downloads
-            {{- if .Values.dbs.sourceDb.sslAuth.enabled }}
-            - name: source-db-cert-conf
-              mountPath: /tmp/certs/source
+            {{- range .Values.namespaces }}
+            {{- if .db.ssl.enabled }}
+            - name: source-db-cert-{{ .name }}
+              mountPath: {{ printf "/tmp/certs/source-%s" .name | quote }}
               readOnly: true
+            {{- end }}
             {{- end }}
             {{- if .Values.dbs.destinationDb.sslAuth.enabled }}
             - name: dest-db-cert-conf
@@ -121,6 +126,9 @@ spec:
         - name: layers-config
           configMap:
             name: {{ include "synchronizer.fullname" . }}-layers
+        - name: namespaces-config
+          secret:
+            secretName: {{ include "synchronizer.fullname" . }}-namespaces
         - name: aliases-config
           configMap:
             name: {{ include "synchronizer.fullname" . }}-aliases
@@ -131,16 +139,13 @@ spec:
         {{- end }}
         - name: s3-downloads
           emptyDir: {}
-        {{- if .Values.dbs.sourceDb.sslAuth.enabled }}
-        - name: source-db-cert-conf
+        {{- range .Values.namespaces }}
+        {{- if .db.ssl.enabled }}
+        - name: source-db-cert-{{ .name }}
           secret:
-            secretName: {{ .Values.dbs.sourceDb.sslAuth.secretName }}
+            secretName: {{ .db.sslSecretName }}
         {{- end }}
-         {{- if .Values.caSecretName }}
-            - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
-              name: root-ca
-              subPath: {{ quote .Values.caKey }}
-            {{- end }}
+        {{- end }}
         {{- if .Values.dbs.destinationDb.sslAuth.enabled }}
         - name: dest-db-cert-conf
           secret:
