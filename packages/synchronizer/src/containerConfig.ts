@@ -18,8 +18,7 @@ import { getTracing } from '@common/tracing';
 import { CRON_MANAGER_SYMBOL, CronManager } from './sync/cron';
 import { s3ClientFactory } from './common/s3';
 import { S3Repository } from './common/s3/s3Repository';
-import { FsRepository } from './common/fs/fsRepository';
-import { buildNamespaceHandle } from './sync/namespaceHandle';
+import { createNamespaceHandles } from './sync/namespaceHandle';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -135,15 +134,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: NAMESPACE_HANDLES,
         provider: {
-          useFactory: instancePerContainerCachingFactory((container) => {
-            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-            const logger = container.resolve<Logger>(SERVICES.LOGGER);
-            const s3Repository = container.resolve(S3Repository);
-            const fsRepository = container.resolve(FsRepository);
-            return config
-              .get('namespaces')
-              .map((namespaceConfig) => buildNamespaceHandle(container, namespaceConfig, s3Repository, fsRepository, logger, cleanupRegistry));
-          }),
+          useFactory: instancePerContainerCachingFactory((container) => createNamespaceHandles(container, cleanupRegistry)),
         },
       },
       {
