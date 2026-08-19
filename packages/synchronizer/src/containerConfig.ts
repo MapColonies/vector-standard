@@ -12,11 +12,14 @@ import type { S3Client } from '@aws-sdk/client-s3';
 import { ListBucketsCommand } from '@aws-sdk/client-s3';
 import { type ConfigType, getConfig } from '@common/config';
 import { type InjectionObject, registerDependencies } from '@common/dependencyRegistration';
-import { DB_CONFIGS, HEALTHCHECK, ON_SIGNAL, REPOSITORIES, SERVICES, SERVICE_NAME } from '@common/constants';
+import { HEALTHCHECK, NAMESPACE_HANDLES, ON_SIGNAL, REPOSITORIES, SERVICES, SERVICE_NAME } from '@common/constants';
 import { getTracing } from '@common/tracing';
-import { createDataSourceFactory, healthCheckFactory } from './common/db/connection';
+import { destinationDataSourceFactory, healthCheckFactory } from './common/db/connection';
 import { CRON_MANAGER_SYMBOL, CronManager } from './sync/cron';
 import { s3ClientFactory } from './common/s3';
+import { S3Repository } from './common/s3/s3Repository';
+import { FsRepository } from './common/fs/fsRepository';
+import { buildNamespaceHandle } from './sync/namespaceHandle';
 
 export interface RegisterOptions {
   override?: InjectionObject<unknown>[];
@@ -92,26 +95,32 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
           });
         },
       },
-      ...DB_CONFIGS.map(({ configKey, token }) => {
-        return {
-          token,
-          provider: {
-            useFactory: instancePerContainerCachingFactory(createDataSourceFactory(configKey)),
-          },
-          postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
-            const dataSource = deps.resolve<DataSource>(token);
+      {
+        token: S3Repository,
+        provider: { useFactory: instancePerContainerCachingFactory((container) => container.resolve(S3Repository)) },
+        postInjectionHook: (deps: DependencyContainer): void => {
+          const s3Repository = deps.resolve(S3Repository);
+          deps.register(S3Repository, { useValue: s3Repository });
+        },
+      },
+      {
+        token: DESTINATION_DATA_SOURCE_PROVIDER,
+        provider: { useFactory: instancePerContainerCachingFactory(destinationDataSourceFactory) },
+        postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
+          const dataSource = deps.resolve<DataSource>(DESTINATION_DATA_SOURCE_PROVIDER);
 
-            if (!dataSource.isInitialized) {
-              await dataSource.initialize();
-            }
+          if (!dataSource.isInitialized) {
+            await dataSource.initialize();
+          }
 
-            cleanupRegistry.register({
-              id: token,
-              func: dataSource.destroy.bind(dataSource),
-            });
-          },
-        };
-      }),
+          deps.register(DESTINATION_DATA_SOURCE_PROVIDER, { useValue: dataSource });
+
+          cleanupRegistry.register({
+            id: DESTINATION_DATA_SOURCE_PROVIDER,
+            func: dataSource.destroy.bind(dataSource),
+          });
+        },
+      },
       ...REPOSITORIES.map(({ token, entity }) => ({
         token,
         provider: {
@@ -121,6 +130,20 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
           },
         },
       })),
+      {
+        token: NAMESPACE_HANDLES,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            const logger = container.resolve<Logger>(SERVICES.LOGGER);
+            const s3Repository = container.resolve(S3Repository);
+            const fsRepository = container.resolve(FsRepository);
+            return config
+              .get('namespaces')
+              .map((namespaceConfig) => buildNamespaceHandle(container, namespaceConfig, s3Repository, fsRepository, logger, cleanupRegistry));
+          }),
+        },
+      },
       {
         token: CRON_MANAGER_SYMBOL,
         provider: { useClass: CronManager },

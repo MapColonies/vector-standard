@@ -15,6 +15,7 @@ export type SyncSpanName = (typeof SyncSpanName)[keyof typeof SyncSpanName];
 export const SyncAttributes = {
   LAYER_NAME: 'layer.name',
   LAYER_ID: 'layer.id',
+  NAMESPACE: 'namespace',
   LAYERS_COUNT: 'layers.count',
   LAYERS_CHANGED: 'layers.changed',
   PROPERTIES_AFFECTED: 'properties.affected',

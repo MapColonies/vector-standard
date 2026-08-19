@@ -10,6 +10,7 @@ const typeMapFile = './config/typeMap.json';
 const typeMap = parseTypeMap(JSON.parse(readFileSync(typeMapFile, 'utf-8')) as JsonValue, typeMapFile);
 
 describe('columnInfosToProperties', function () {
+  const namespace = 'test_namespace';
   const layer = 'test_layer';
 
   describe('Happy Path', function () {
@@ -53,7 +54,7 @@ describe('columnInfosToProperties', function () {
     ])('should map udt "%s" to %s', function (udtName, expected) {
       const columnInfos: ColumnInfo[] = [{ columnName: 'col', udtName }];
 
-      const [result] = columnInfosToProperties(columnInfos, layer, typeMap);
+      const [result] = columnInfosToProperties(columnInfos, namespace, layer, typeMap);
 
       expect(result.type).toBe(expected);
     });
@@ -72,19 +73,19 @@ describe('columnInfosToProperties', function () {
       ['geography(MultiPolygon,4326)', columnType.multiPolygon],
       ['geometry(GeometryCollection,4326)', columnType.geom],
     ])('should map "%s" to its specific GML type', function (udtName, expected) {
-      const [result] = columnInfosToProperties([{ columnName: 'shape', udtName }], layer, typeMap);
+      const [result] = columnInfosToProperties([{ columnName: 'shape', udtName }], namespace, layer, typeMap);
 
       expect(result.type).toBe(expected);
     });
 
     it('should map unqualified geometry to gml:GeometryPropertyType', function () {
-      const [result] = columnInfosToProperties([{ columnName: 'shape', udtName: 'geometry' }], layer, typeMap);
+      const [result] = columnInfosToProperties([{ columnName: 'shape', udtName: 'geometry' }], namespace, layer, typeMap);
 
       expect(result.type).toBe(columnType.geom);
     });
 
     it('should match udt names case insensitively', function () {
-      const [result] = columnInfosToProperties([{ columnName: 'name', udtName: 'CHARACTER VARYING(255)' }], layer, typeMap);
+      const [result] = columnInfosToProperties([{ columnName: 'name', udtName: 'CHARACTER VARYING(255)' }], namespace, layer, typeMap);
 
       expect(result.type).toBe(columnType.text);
     });
@@ -95,30 +96,30 @@ describe('columnInfosToProperties', function () {
         { columnName: 'height', udtName: 'real' },
       ];
 
-      const result = columnInfosToProperties(columnInfos, layer, typeMap);
+      const result = columnInfosToProperties(columnInfos, namespace, layer, typeMap);
 
       expect(result).toEqual([
-        { layerName: layer, property: 'name', type: columnType.text },
-        { layerName: layer, property: 'height', type: columnType.real },
+        { namespace, layerName: layer, property: 'name', type: columnType.text },
+        { namespace, layerName: layer, property: 'height', type: columnType.real },
       ]);
     });
   });
 
   describe('Sad Path', function () {
     it('should return an empty array for no column infos', function () {
-      expect(columnInfosToProperties([], layer, typeMap)).toEqual([]);
+      expect(columnInfosToProperties([], namespace, layer, typeMap)).toEqual([]);
     });
   });
 
   describe('Bad Path', function () {
     it('should map unknown geometry sub-type to gml:GeometryPropertyType', function () {
-      const [result] = columnInfosToProperties([{ columnName: 'shape', udtName: 'geometry(Curve,4326)' }], layer, typeMap);
+      const [result] = columnInfosToProperties([{ columnName: 'shape', udtName: 'geometry(Curve,4326)' }], namespace, layer, typeMap);
 
       expect(result.type).toBe(columnType.geom);
     });
 
     it('should return no properties for a udt name not in the type map', function () {
-      const result = columnInfosToProperties([{ columnName: 'data', udtName: 'pg_lsn' }], layer, typeMap);
+      const result = columnInfosToProperties([{ columnName: 'data', udtName: 'pg_lsn' }], namespace, layer, typeMap);
 
       expect(result).toHaveLength(0);
     });
@@ -131,7 +132,7 @@ describe('columnInfosToProperties', function () {
         { columnName: 'height', udtName: 'real' },
       ];
 
-      const result = columnInfosToProperties(columnInfos, layer, typeMap, onUnknown);
+      const result = columnInfosToProperties(columnInfos, namespace, layer, typeMap, onUnknown);
 
       expect(result).toHaveLength(2);
       expect(result.map((p) => p.property)).toEqual(['name', 'height']);

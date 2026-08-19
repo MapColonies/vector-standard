@@ -16,7 +16,6 @@ const normalizeUdtName = (rawUdtName: string, typeMap: TypeMap): ColumnType | un
     return plain;
   }
 
-  // Strip length/precision modifier e.g. "character varying(255)" → "character varying"
   const withoutModifier = udtName.replace(/\s*\(\d+(?:,\s*\d+)?\)$/, '');
   if (withoutModifier !== udtName) {
     const stripped = typeMap.types.get(withoutModifier);
@@ -52,6 +51,7 @@ export const schemaOf = (dataSource: DataSource): string => {
 
 export const columnInfosToProperties = (
   columnInfos: ColumnInfo[],
+  namespace: string,
   layerName: string,
   typeMap: TypeMap,
   onUnknown?: (columnName: string, udtName: string) => void
@@ -62,7 +62,7 @@ export const columnInfosToProperties = (
     if (type === undefined) {
       onUnknown?.(columnName, udtName);
     } else {
-      result.push({ layerName, property: columnName, type });
+      result.push({ namespace, layerName, property: columnName, type });
     }
   }
   return result;

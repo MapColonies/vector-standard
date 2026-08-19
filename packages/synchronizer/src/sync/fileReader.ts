@@ -6,9 +6,21 @@ import type { LayerEnums } from '@common/interfaces';
 import { parseTypeMap, type TypeMap } from './typeMap';
 import { TypeMapError } from './errors';
 
-type AliasesFile = Record<string, Record<string, string>>;
+const ALL = '*';
 
-export type FileAliases = Map<string, Map<string, string>>;
+type AliasesFile = Record<string, Record<string, Record<string, string>>>;
+
+export type FileAliases = Map<string, Map<string, Map<string, string>>>;
+
+export const resolveFileAliases = (fileAliases: FileAliases, namespace: string, layerName: string): Map<string, string> => {
+  const tiers = [
+    fileAliases.get(ALL)?.get(ALL),
+    fileAliases.get(ALL)?.get(layerName),
+    fileAliases.get(namespace)?.get(ALL),
+    fileAliases.get(namespace)?.get(layerName),
+  ];
+  return new Map(tiers.filter((tier): tier is Map<string, string> => tier !== undefined).flatMap((tier) => [...tier]));
+};
 
 @injectable()
 export class FileReader {
@@ -38,12 +50,19 @@ export class FileReader {
   }
 
   public async readAliases(filePath: string): Promise<FileAliases> {
+    let parsed: AliasesFile;
     try {
       const content = await this.fsRepository.readFile(filePath, 'utf-8');
-      const parsed = JSON.parse(content.toString()) as AliasesFile;
-      return new Map(Object.entries(parsed).map(([layer, props]) => [layer, new Map(Object.entries(props))]));
+      parsed = JSON.parse(content.toString()) as AliasesFile;
     } catch (err) {
       throw new Error(`Failed to read aliases from ${filePath}`, { cause: err });
     }
+
+    return new Map(
+      Object.entries(parsed).map(([namespace, layers]) => [
+        namespace,
+        new Map(Object.entries(layers).map(([layer, props]) => [layer, new Map(Object.entries(props))])),
+      ])
+    );
   }
 }
