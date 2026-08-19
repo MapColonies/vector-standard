@@ -4,7 +4,7 @@ import { Registry } from 'prom-client';
 import type { DependencyContainer } from 'tsyringe/dist/typings/types';
 import type { Logger } from '@map-colonies/js-logger';
 import { jsLogger } from '@map-colonies/js-logger';
-import { instancePerContainerCachingFactory } from 'tsyringe';
+import { Lifecycle, instancePerContainerCachingFactory } from 'tsyringe';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import type { DataSource, Repository } from 'typeorm';
 import type { HealthCheck } from '@godaddy/terminus';
@@ -97,11 +97,8 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       },
       {
         token: S3Repository,
-        provider: { useFactory: instancePerContainerCachingFactory((container) => container.resolve(S3Repository)) },
-        postInjectionHook: (deps: DependencyContainer): void => {
-          const s3Repository = deps.resolve(S3Repository);
-          deps.register(S3Repository, { useValue: s3Repository });
-        },
+        provider: { useClass: S3Repository },
+        options: { lifecycle: Lifecycle.Singleton },
       },
       {
         token: DESTINATION_DATA_SOURCE_PROVIDER,

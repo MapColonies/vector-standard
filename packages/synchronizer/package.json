@@ -9,7 +9,7 @@
     "start": "npm run build && node dist/src/index.js",
     "start:dev": "npm run build && cd dist && cross-env CONFIG_OFFLINE_MODE=true  node --enable-source-maps --import ./instrumentation.mjs ./src/index.js",
     "dev": "ts-node src/index.ts",
-    "assets:copy": "copyfiles -u 1 ./config/**/* ./dist/config && copyfiles -f  copyfiles ./package.json dist",
+    "assets:copy": "copyfiles -u 1 \"./config/**/*\" ./dist/config && copyfiles -f  copyfiles ./package.json dist",
     "watch": "ts-node-dev --respawn src/index.ts",
     "test:integration": "vitest run --coverage.enabled=false --project integration",
     "test": "vitest run",
