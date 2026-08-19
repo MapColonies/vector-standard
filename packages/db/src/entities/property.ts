@@ -7,6 +7,9 @@ export const PROPERTY_REPOSITORY_SYMBOL = Symbol('PropertyRepository');
 
 @Entity('property')
 export class Property {
+  @PrimaryColumn()
+  public namespace!: string;
+
   @PrimaryColumn({ name: 'layer_name' })
   public layerName!: string;
 
@@ -27,6 +30,9 @@ export class Property {
   public possibleValues?: EnumValue[];
 
   @ManyToOne(() => Layer, (layer) => layer.properties)
-  @JoinColumn({ name: 'layer_name', referencedColumnName: 'layerName' })
+  @JoinColumn([
+    { name: 'namespace', referencedColumnName: 'namespace' },
+    { name: 'layer_name', referencedColumnName: 'layerName' },
+  ])
   public layerRelation!: Layer;
 }
