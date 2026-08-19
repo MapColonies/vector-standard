@@ -20,10 +20,10 @@ export class LayerController {
     const { namespace } = req.params;
     try {
       const layers = await this.manager.getLayers(namespace);
-      this.logger.debug({ msg: `got ${layers.length} layers`, namespace });
+      this.logger.debug({ msg: `got ${layers.length} layers for namespace ${namespace}` });
       return res.json({ layers });
     } catch (error) {
-      this.logger.error({ msg: 'failed to get layers', namespace, err: error });
+      this.logger.error({ msg: `failed to get layers for namespace ${namespace}`, err: error });
       next(error);
     }
   };
@@ -32,10 +32,10 @@ export class LayerController {
     const { namespace, layerName } = req.params;
     try {
       const layer = await this.manager.getLayerSpecByName(namespace, layerName);
-      this.logger.debug({ msg: `got layer: ${layerName}`, namespace });
+      this.logger.debug({ msg: `got layer: ${layerName} for namespace ${namespace}` });
       return res.json(layer);
     } catch (error) {
-      this.logger.error({ msg: 'failed to get layer by name', namespace, layerName, err: error });
+      this.logger.error({ msg: `failed to get layer ${layerName} for namespace ${namespace}`, err: error });
       next(error);
     }
   };

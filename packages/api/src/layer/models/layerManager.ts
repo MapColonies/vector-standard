@@ -15,7 +15,7 @@ export class LayerManager {
   ) {}
 
   public async getLayers(namespace: string): Promise<LayerSummary[]> {
-    this.logger.debug({ msg: 'getting layers', namespace });
+    this.logger.debug({ msg: `getting layers for namespace ${namespace}` });
     const layers = await this.repository.find({ where: { namespace }, select: { layerName: true, alias: true } });
     if (layers.length === 0) {
       throw new NotFoundError(`Namespace doesn't exist`);
@@ -24,7 +24,7 @@ export class LayerManager {
   }
 
   public async getLayerSpecByName(namespace: string, name: string): Promise<LayerSpec> {
-    this.logger.debug({ msg: 'getting layer spec by name', namespace, name });
+    this.logger.debug({ msg: `getting layer spec ${name} for namespace ${namespace}` });
     const layer = await this.repository.findOne({
       where: { namespace, layerName: name },
       relations: { properties: { possibleValues: true } },
