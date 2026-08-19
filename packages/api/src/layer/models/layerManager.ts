@@ -14,16 +14,19 @@ export class LayerManager {
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {}
 
-  public async getLayers(): Promise<LayerSummary[]> {
-    this.logger.debug({ msg: 'getting layers' });
-    const layers = await this.repository.find({ select: { layerName: true, alias: true } });
+  public async getLayers(namespace: string): Promise<LayerSummary[]> {
+    this.logger.debug({ msg: 'getting layers', namespace });
+    const layers = await this.repository.find({ where: { namespace }, select: { layerName: true, alias: true } });
+    if (layers.length === 0) {
+      throw new NotFoundError(`Namespace doesn't exist`);
+    }
     return layers.map(({ layerName, alias }) => ({ layerName, alias }));
   }
 
-  public async getLayerSpecByName(name: string): Promise<LayerSpec> {
-    this.logger.debug({ msg: 'getting layer spec by name', name });
+  public async getLayerSpecByName(namespace: string, name: string): Promise<LayerSpec> {
+    this.logger.debug({ msg: 'getting layer spec by name', namespace, name });
     const layer = await this.repository.findOne({
-      where: { layerName: name },
+      where: { namespace, layerName: name },
       relations: { properties: { possibleValues: true } },
     });
     if (!layer) {

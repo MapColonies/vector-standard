@@ -11,6 +11,7 @@ import { collectMetricsExpressMiddleware } from '@map-colonies/prometheus';
 import { Registry } from 'prom-client';
 import { SERVICES } from '@common/constants';
 import { LAYER_ROUTER_SYMBOL } from './layer/routes/layer';
+import { NAMESPACE_ROUTER_SYMBOL } from './namespace/routes/namespace';
 import { ConfigType } from './common/config';
 
 @injectable()
@@ -21,7 +22,8 @@ export class ServerBuilder {
     @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
-    @inject(LAYER_ROUTER_SYMBOL) private readonly layerRouter: Router
+    @inject(LAYER_ROUTER_SYMBOL) private readonly layerRouter: Router,
+    @inject(NAMESPACE_ROUTER_SYMBOL) private readonly namespaceRouter: Router
   ) {
     this.serverInstance = express();
   }
@@ -44,7 +46,8 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/layers', this.layerRouter);
+    this.serverInstance.use('/namespaces', this.namespaceRouter);
+    this.serverInstance.use('/namespaces', this.layerRouter);
     this.buildDocsRoutes();
   }
 

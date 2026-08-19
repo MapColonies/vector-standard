@@ -11,6 +11,7 @@ import { type InjectionObject, registerDependencies } from '@common/dependencyRe
 import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@common/constants';
 import { getTracing } from '@common/tracing';
 import { LAYER_ROUTER_SYMBOL, layerRouterFactory } from './layer/routes/layer';
+import { NAMESPACE_ROUTER_SYMBOL, namespaceRouterFactory } from './namespace/routes/namespace';
 import { dataSourceFactory, healthCheckFactory } from './common/db/connection';
 import { type ConfigType, getConfig } from './common/config';
 
@@ -66,6 +67,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         },
       },
       { token: LAYER_ROUTER_SYMBOL, provider: { useFactory: layerRouterFactory } },
+      { token: NAMESPACE_ROUTER_SYMBOL, provider: { useFactory: namespaceRouterFactory } },
       {
         token: LAYER_REPOSITORY_SYMBOL,
         provider: {
