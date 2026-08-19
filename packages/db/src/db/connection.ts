@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
-import type { DataSource, DataSourceOptions } from 'typeorm';
+import { DataSource } from 'typeorm';
+import type { DataSourceOptions } from 'typeorm';
 import type { DependencyContainer, InjectionToken } from 'tsyringe';
 import { Property } from '../entities/property';
 import { EnumValue } from '../entities/enumValue';
@@ -51,3 +52,6 @@ export const createDataSourceOptions = (dbConfig: DbConfig, applicationName: str
     ssl: createSslOptions(ssl),
   };
 };
+
+export const createDataSource = (dbConfig: DbConfig, applicationName: string): DataSource =>
+  new DataSource(createDataSourceOptions(dbConfig, applicationName));

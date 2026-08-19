@@ -7,14 +7,14 @@ import { jsLogger } from '@map-colonies/js-logger';
 import { instancePerContainerCachingFactory } from 'tsyringe';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import type { DataSource, Repository } from 'typeorm';
-import { DATA_SOURCE_PROVIDER as DESTINATION_DATA_SOURCE_PROVIDER } from '@db';
+import type { HealthCheck } from '@godaddy/terminus';
+import { DATA_SOURCE_PROVIDER as DESTINATION_DATA_SOURCE_PROVIDER, createDataSource, createDataSourceHealthCheck } from '@db';
 import type { S3Client } from '@aws-sdk/client-s3';
 import { ListBucketsCommand } from '@aws-sdk/client-s3';
 import { type ConfigType, getConfig } from '@common/config';
 import { type InjectionObject, registerDependencies } from '@common/dependencyRegistration';
-import { HEALTHCHECK, NAMESPACE_HANDLES, ON_SIGNAL, REPOSITORIES, SERVICES, SERVICE_NAME } from '@common/constants';
+import { DESTINATION_DB_CONFIG_PATH, HEALTHCHECK, NAMESPACE_HANDLES, ON_SIGNAL, REPOSITORIES, SERVICES, SERVICE_NAME } from '@common/constants';
 import { getTracing } from '@common/tracing';
-import { destinationDataSourceFactory, healthCheckFactory } from './common/db/connection';
 import { CRON_MANAGER_SYMBOL, CronManager } from './sync/cron';
 import { s3ClientFactory } from './common/s3';
 import { S3Repository } from './common/s3/s3Repository';
@@ -105,7 +105,12 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       },
       {
         token: DESTINATION_DATA_SOURCE_PROVIDER,
-        provider: { useFactory: instancePerContainerCachingFactory(destinationDataSourceFactory) },
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            return createDataSource(config.get(DESTINATION_DB_CONFIG_PATH), SERVICE_NAME);
+          }),
+        },
         postInjectionHook: async (deps: DependencyContainer): Promise<void> => {
           const dataSource = deps.resolve<DataSource>(DESTINATION_DATA_SOURCE_PROVIDER);
 
@@ -159,7 +164,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: HEALTHCHECK,
         provider: {
-          useFactory: healthCheckFactory,
+          useFactory: (container: DependencyContainer): HealthCheck => createDataSourceHealthCheck(container, [DESTINATION_DATA_SOURCE_PROVIDER]),
         },
       },
     ];

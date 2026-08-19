@@ -4,7 +4,8 @@ import { Registry } from 'prom-client';
 import type { DependencyContainer } from 'tsyringe/dist/typings/types';
 import { jsLogger, type Logger } from '@map-colonies/js-logger';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
-import { DATA_SOURCE_PROVIDER, Layer, LAYER_REPOSITORY_SYMBOL } from '@db';
+import { DATA_SOURCE_PROVIDER, Layer, LAYER_REPOSITORY_SYMBOL, createDataSource, createDataSourceHealthCheck } from '@db';
+import type { HealthCheck } from '@godaddy/terminus';
 import type { Repository, DataSource } from 'typeorm';
 import { instancePerContainerCachingFactory } from 'tsyringe';
 import { type InjectionObject, registerDependencies } from '@common/dependencyRegistration';
@@ -12,7 +13,6 @@ import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@common/constant
 import { getTracing } from '@common/tracing';
 import { LAYER_ROUTER_SYMBOL, layerRouterFactory } from './layer/routes/layer';
 import { NAMESPACE_ROUTER_SYMBOL, namespaceRouterFactory } from './namespace/routes/namespace';
-import { dataSourceFactory, healthCheckFactory } from './common/db/connection';
 import { type ConfigType, getConfig } from './common/config';
 
 export interface RegisterOptions {
@@ -80,7 +80,10 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: DATA_SOURCE_PROVIDER,
         provider: {
-          useFactory: instancePerContainerCachingFactory(dataSourceFactory),
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            return createDataSource(config.get('db'), SERVICE_NAME);
+          }),
         },
         postInjectionHook: async (container: DependencyContainer): Promise<void> => {
           const dataSource = container.resolve<DataSource>(DATA_SOURCE_PROVIDER);
@@ -98,7 +101,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: HEALTHCHECK,
         provider: {
-          useFactory: healthCheckFactory,
+          useFactory: (container: DependencyContainer): HealthCheck => createDataSourceHealthCheck(container, [DATA_SOURCE_PROVIDER]),
         },
       },
     ];
