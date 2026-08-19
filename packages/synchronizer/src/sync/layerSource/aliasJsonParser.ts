@@ -7,11 +7,6 @@ const isRecord = ajv.compile<Record<string, unknown>>({ type: 'object' });
 const isString = ajv.compile<string>({ type: 'string' });
 const isArray = ajv.compile<unknown[]>({ type: 'array' });
 
-export interface ParsedDocument {
-  alias: string;
-  propertyAliases: Map<string, string>;
-}
-
 const isRecordEntry = (value: unknown): value is Record<string, unknown> => isRecord(value);
 
 const buildPropertyAliases = (rawFields: unknown[], config: PerLayerJsonSourceConfig): Map<string, string> =>
@@ -22,6 +17,11 @@ const buildPropertyAliases = (rawFields: unknown[], config: PerLayerJsonSourceCo
       .filter((field): field is { fieldName: string; aliasFieldName: string } => isString(field.fieldName) && isString(field.aliasFieldName))
       .map(({ fieldName, aliasFieldName }): [string, string] => [fieldName, aliasFieldName])
   );
+
+export interface ParsedDocument {
+  alias: string;
+  propertyAliases: Map<string, string>;
+}
 
 export const parseDocument = (content: string, config: PerLayerJsonSourceConfig): ParsedDocument => {
   const raw: unknown = JSON.parse(content);

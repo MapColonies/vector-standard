@@ -29,7 +29,6 @@ const resolveOne = async (
     const content = (await fsRepository.readFile(filePath, 'utf-8')).toString();
     const document = parseDocument(content, config);
     return {
-      layerId: undefined,
       alias: document.alias,
       propertyAliases: document.propertyAliases,
       source: layerSource.perLayerJson,
