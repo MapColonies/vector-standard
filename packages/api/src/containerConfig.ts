@@ -9,7 +9,9 @@ import type { HealthCheck } from '@godaddy/terminus';
 import type { Repository, DataSource } from 'typeorm';
 import { instancePerContainerCachingFactory } from 'tsyringe';
 import { type InjectionObject, registerDependencies } from '@common/dependencyRegistration';
-import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@common/constants';
+import { HEALTHCHECK, ON_SIGNAL, OPENAPI_SPEC, SERVICES, SERVICE_NAME } from '@common/constants';
+import { loadSpec } from '@common/openapi';
+import type { OpenapiSpec } from '@common/interfaces';
 import { getTracing } from '@common/tracing';
 import { LAYER_ROUTER_SYMBOL, layerRouterFactory } from './layer/routes/layer';
 import { NAMESPACE_ROUTER_SYMBOL, namespaceRouterFactory } from './namespace/routes/namespace';
@@ -65,6 +67,15 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: ON_SIGNAL,
         provider: {
           useValue: cleanupRegistry.trigger.bind(cleanupRegistry),
+        },
+      },
+      {
+        token: OPENAPI_SPEC,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container): OpenapiSpec => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            return loadSpec(config.get('openapiConfig.filePath'));
+          }),
         },
       },
       { token: LAYER_ROUTER_SYMBOL, provider: { useFactory: layerRouterFactory } },

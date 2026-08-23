@@ -18,6 +18,7 @@ export const PUBLIC_PATHS = new Map<string, PublicPath>([
 
 export const HEALTHCHECK = Symbol('HealthCheck');
 export const ON_SIGNAL = Symbol('onSignal');
+export const OPENAPI_SPEC = Symbol('OpenapiSpec');
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SERVICES = {
