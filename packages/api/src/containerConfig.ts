@@ -13,6 +13,7 @@ import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@common/constant
 import { getTracing } from '@common/tracing';
 import { LAYER_ROUTER_SYMBOL, layerRouterFactory } from './layer/routes/layer';
 import { NAMESPACE_ROUTER_SYMBOL, namespaceRouterFactory } from './namespace/routes/namespace';
+import { DOCS_ROUTER_SYMBOL, docsRouterFactory } from './docs/routes/docs';
 import { type ConfigType, getConfig } from './common/config';
 
 export interface RegisterOptions {
@@ -68,6 +69,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       },
       { token: LAYER_ROUTER_SYMBOL, provider: { useFactory: layerRouterFactory } },
       { token: NAMESPACE_ROUTER_SYMBOL, provider: { useFactory: namespaceRouterFactory } },
+      { token: DOCS_ROUTER_SYMBOL, provider: { useFactory: docsRouterFactory } },
       {
         token: LAYER_REPOSITORY_SYMBOL,
         provider: {
