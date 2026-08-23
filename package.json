@@ -24,7 +24,7 @@
     "lerna": "^6.6.2"
   },
   "dependencies": {
-    "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-11bf4605d7a17c723dd85f624c88fe32d9957863.tgz"
+    "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-3c2d0665e3509bb3e7113b328fc224fe6950895a.tgz"
   },
   "overrides": {
     "@types/node": "^24.0.0"
