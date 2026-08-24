@@ -24,10 +24,17 @@ import {
 } from './errors';
 import { resolveFileAliases, type FileAliases } from './fileReader';
 import type { TypeMap } from './typeMap';
+import type { LayerSourceRecord } from './layerSource/types';
 
 export interface ColumnInfo {
   columnName: string;
   udtName: string;
+}
+
+export interface SyncFullLayerContext {
+  typeMap: TypeMap;
+  fileAliases: FileAliases;
+  pruneStale: boolean;
 }
 
 @injectable()
@@ -40,6 +47,33 @@ export class SyncModel {
     @inject(PROPERTY_REPOSITORY_SYMBOL) private readonly propertyRepository: Repository<Property>,
     @inject(ENUMS_REPOSITORY_SYMBOL) private readonly enumsRepository: Repository<EnumValue>
   ) {}
+
+  public async syncFullLayer(namespace: string, layer: LayerEnums, record: LayerSourceRecord, context: SyncFullLayerContext): Promise<void> {
+    return startActivePromisifiedSpan(
+      SyncSpanName.SYNC_FULL_LAYER,
+      { [SyncAttributes.LAYER_NAME]: layer.layerName, [SyncAttributes.NAMESPACE]: namespace },
+      contextAPI.active(),
+      async () => {
+        const { typeMap, fileAliases, pruneStale } = context;
+
+        await this.syncLayer(namespace, layer.layerName, record.layerId ?? null, record.source, record.alias);
+
+        try {
+          const affected = await this.syncProperties(namespace, layer, typeMap, fileAliases, record.propertyAliases);
+          this.logger.info({ msg: `Synced properties for ${namespace}/${layer.layerName}`, affected });
+        } catch (err) {
+          this.logger.warn({ msg: `Failed to sync properties for ${namespace}/${layer.layerName}, skipping to enum sync`, err });
+        }
+
+        const enumsAffected = await this.syncEnum(namespace, layer);
+        this.logger.info({ msg: `Synced enums for ${namespace}/${layer.layerName}`, enumsAffected });
+
+        if (pruneStale) {
+          await this.deleteStaleEnumValues(namespace, layer.layerName, layer.enums);
+        }
+      }
+    );
+  }
 
   public async syncLayer(namespace: string, layerName: string, layerId: number | null, source: LayerSource, alias?: string): Promise<void> {
     return startActivePromisifiedSpan(

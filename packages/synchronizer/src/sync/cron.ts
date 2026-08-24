@@ -77,17 +77,10 @@ export class CronManager {
         continue;
       }
 
-      await namespace.dal.syncLayer(namespace.name, layer.layerName, record.layerId ?? null, record.source, record.alias);
       try {
-        const affected = await namespace.dal.syncProperties(namespace.name, layer, typeMap, fileAliases, record.propertyAliases);
-        this.logger.info({ msg: `Synced properties for ${namespace.name}/${layer.layerName}`, affected });
+        await namespace.dal.syncFullLayer(namespace.name, layer, record, { typeMap, fileAliases, pruneStale: layersChanged });
       } catch (err) {
-        this.logger.warn({ msg: `Failed to sync properties for ${namespace.name}/${layer.layerName}, skipping to enum sync`, err });
-      }
-      const enumsAffected = await namespace.dal.syncEnum(namespace.name, layer);
-      this.logger.info({ msg: `Synced enums for ${namespace.name}/${layer.layerName}`, enumsAffected });
-      if (layersChanged) {
-        await namespace.dal.deleteStaleEnumValues(namespace.name, layer.layerName, layer.enums);
+        this.logger.warn({ msg: `Failed to sync ${namespace.name}/${layer.layerName}, continuing with next layer`, err });
       }
     }
 

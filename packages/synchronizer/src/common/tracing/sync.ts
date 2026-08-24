@@ -2,6 +2,7 @@
 export const SyncSpanName = {
   SYNC_TICK: 'sync.tick',
   SYNC_LAYER: 'sync.layer',
+  SYNC_FULL_LAYER: 'sync.layer.full',
   SYNC_PROPERTIES: 'sync.properties',
   SYNC_ENUM: 'sync.enum',
   LOAD_LUA_DATA: 'sync.lua.load',
