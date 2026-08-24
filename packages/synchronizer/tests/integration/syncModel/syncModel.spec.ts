@@ -18,12 +18,11 @@ import {
 import { initConfig } from '@src/common/config';
 import { registerExternalValues } from '@src/containerConfig';
 import { SERVICES, NAMESPACE_HANDLES } from '@src/common/constants';
-import { S3Repository } from '@src/common/s3/s3Repository';
 import type { SyncModel } from '@src/sync/SyncModel';
 import { schemaOf } from '@src/sync/helpers';
 import { FileReader, type FileAliases } from '@src/sync/fileReader';
 import type { TypeMap } from '@src/sync/typeMap';
-import type { NamespaceHandle } from '@src/sync/namespaceHandle';
+import type { NamespaceHandle } from '@src/sync/namespaceHandle/types';
 
 const TEST_LAYER = 'test_layer';
 const NAMESPACE = 'test';
@@ -97,7 +96,7 @@ describe('DAL', function () {
       override: [
         { token: SERVICES.LOGGER, provider: { useValue: await jsLogger({ enabled: false }) } },
         { token: SERVICES.TRACER, provider: { useValue: trace.getTracer('testTracer') } },
-        { token: S3Repository, provider: { useValue: { downloadFile: async () => Promise.reject(new Error('not used in this suite')) } } },
+        { token: SERVICES.S3_REPOSITORY, provider: { useValue: { downloadFile: async () => Promise.reject(new Error('not used in this suite')) } } },
       ],
       useChild: true,
     });
