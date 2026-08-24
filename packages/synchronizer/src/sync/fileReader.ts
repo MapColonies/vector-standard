@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import type { JsonValue } from 'type-fest';
-import { injectable } from 'tsyringe';
-import { FsRepository } from '@common/fs/fsRepository';
+import { inject, injectable } from 'tsyringe';
+import type { FsRepository } from '@common/fs/fsRepository';
 import type { LayerEnums } from '@common/interfaces';
+import { SERVICES } from '@common/constants';
 import { parseTypeMap, type TypeMap } from './typeMap';
 import { TypeMapError } from './errors';
 
@@ -24,7 +25,7 @@ export const resolveFileAliases = (fileAliases: FileAliases, namespace: string, 
 
 @injectable()
 export class FileReader {
-  public constructor(private readonly fsRepository: FsRepository) {}
+  public constructor(@inject(SERVICES.FS_REPOSITORY) private readonly fsRepository: FsRepository) {}
 
   public async readLayersWithChecksum(filePath: string): Promise<{ checksum: string; layers: LayerEnums[] }> {
     try {

@@ -2,22 +2,21 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { buffer } from 'node:stream/consumers';
 import type { Logger } from '@map-colonies/js-logger';
-import { inject, injectable, singleton } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import type { S3Client } from '@aws-sdk/client-s3';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { context as contextAPI } from '@opentelemetry/api';
 import { startActivePromisifiedSpan } from '@common/tracing/util';
 import { S3Attributes, S3SpanName } from '@common/tracing/s3';
 import { SERVICES } from '@common/constants';
-import { FsRepository } from '../fs/fsRepository';
+import type { FsRepository } from '../fs/fsRepository';
 
 @injectable()
-@singleton()
 export class S3Repository {
   public constructor(
     @inject(SERVICES.S3_CLIENT) private readonly s3Client: S3Client,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    private readonly fsRepository: FsRepository
+    @inject(SERVICES.FS_REPOSITORY) private readonly fsRepository: FsRepository
   ) {}
 
   public async getObjectWrapper(bucket: string, key: string): Promise<Readable> {

@@ -33,6 +33,8 @@ export const SERVICES = {
   LOGGER: Symbol('Logger'),
   CONFIG: Symbol('Config'),
   S3_CLIENT: Symbol('S3Client'),
+  S3_REPOSITORY: Symbol('S3Repository'),
+  FS_REPOSITORY: Symbol('FsRepository'),
   TRACER: Symbol('Tracer'),
   METRICS: Symbol('METRICS'),
   CLEANUP_REGISTRY: Symbol('CleanupRegistry'),
