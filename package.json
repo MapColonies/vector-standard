@@ -25,8 +25,5 @@
   },
   "dependencies": {
     "@map-colonies/schemas": "https://ghatmpstorage.blob.core.windows.net/npm-packages/schemas-3c2d0665e3509bb3e7113b328fc224fe6950895a.tgz"
-  },
-  "overrides": {
-    "@types/node": "^24.0.0"
   }
 }
