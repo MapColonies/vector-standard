@@ -93,6 +93,9 @@ spec:
           {{- end }}
           
           volumeMounts:
+            - name: namespaces-config
+              mountPath: /usr/src/app/packages/api/dist/config/production.json
+              subPath: production.json
             {{- if .Values.caSecretName }}
             - mountPath: {{ printf "%s/%s" .Values.caPath .Values.caKey | quote }}
               name: root-ca
@@ -104,6 +107,9 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
+        - name: namespaces-config
+          configMap:
+            name: {{ include "api.fullname" . }}-namespaces
       {{- if .Values.db.sslAuth.enabled }}
         - name: cert-conf
           secret:
