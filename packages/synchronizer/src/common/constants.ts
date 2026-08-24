@@ -20,10 +20,7 @@ export const HEALTHCHECK = Symbol('HealthCheck');
 
 export const s3ConfigPath = 'dbs.s3';
 
-export const DB_CONFIGS = [
-  { configKey: 'dbs.source', token: SOURCE_DATA_SOURCE_PROVIDER },
-  { configKey: 'dbs.destination', token: DESTINATION_DATA_SOURCE_PROVIDER },
-] as const;
+export const DESTINATION_DB_CONFIG_PATH = 'dbs.destination';
 
 export const REPOSITORIES = [
   { entity: Layer, token: LAYER_REPOSITORY_SYMBOL },
@@ -31,13 +28,21 @@ export const REPOSITORIES = [
   { entity: EnumValue, token: ENUMS_REPOSITORY_SYMBOL },
 ] as const;
 
+export const ALL_KEYS_SELECTOR = '*';
+
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SERVICES = {
   LOGGER: Symbol('Logger'),
   CONFIG: Symbol('Config'),
   S3_CLIENT: Symbol('S3Client'),
+  S3_REPOSITORY: Symbol('S3Repository'),
+  FS_REPOSITORY: Symbol('FsRepository'),
   TRACER: Symbol('Tracer'),
   METRICS: Symbol('METRICS'),
   CLEANUP_REGISTRY: Symbol('CleanupRegistry'),
 } satisfies Record<string, symbol>;
 /* eslint-enable @typescript-eslint/naming-convention */
+
+export { DESTINATION_DATA_SOURCE_PROVIDER };
+
+export const NAMESPACE_HANDLES = Symbol('NamespaceHandles');

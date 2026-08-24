@@ -7,7 +7,7 @@ abstract class SyncError extends Error {
 }
 
 export class LayerSyncError extends SyncError {
-  public constructor(layerName: string, layerId: number, cause?: unknown) {
+  public constructor(layerName: string, layerId: number | null, cause?: unknown) {
     super(`Failed to sync layer ${layerName} (${layerId})`, { cause });
   }
 }
@@ -60,8 +60,32 @@ export class TypeMapError extends SyncError {
   }
 }
 
+export class LayersFileError extends SyncError {
+  public constructor(filePath: string, reason: string, cause?: unknown) {
+    super(`Invalid layers file ${filePath}: ${reason}`, { cause });
+  }
+}
+
+export class AliasesFileError extends SyncError {
+  public constructor(filePath: string, reason: string, cause?: unknown) {
+    super(`Invalid aliases file ${filePath}: ${reason}`, { cause });
+  }
+}
+
 export class EnumSaveError extends SyncError {
   public constructor(layerName: string, cause?: unknown) {
     super(`Failed to save enum values for ${layerName}`, { cause });
+  }
+}
+
+export class LayerJsonFetchError extends SyncError {
+  public constructor(layerName: string, key: string, cause?: unknown) {
+    super(`Failed to fetch layer JSON for ${layerName} at key ${key}`, { cause });
+  }
+}
+
+export class LayerJsonParseError extends SyncError {
+  public constructor(layerName: string, key: string, cause?: unknown) {
+    super(`Failed to parse layer JSON for ${layerName} at key ${key}`, { cause });
   }
 }

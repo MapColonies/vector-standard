@@ -2,37 +2,67 @@ openapi: 3.0.3
 info:
   title: Layers & Specs API
   description: >
-    API for retrieving geographic layer specifications. Layers expose a set of
-    properties; `enum`-typed properties also carry their list of allowed values.
-  version: 1.2.0
+    API for retrieving geographic layer specifications. Layers expose a set of properties; `enum`-typed properties also carry their list of allowed values.
+  version: 2.0.0
   license:
     name: Proprietary
     url: https://example.com/licenses/proprietary
+security:
+  - ApiKeyAuth: []
 paths:
-  /layers:
+  /namespaces:
     get:
-      summary: Get all layer names
+      summary: Get all namespaces
+      operationId: getNamespaces
+      responses:
+        '200':
+          $ref: '#/components/responses/NamespaceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /namespaces/{namespace}/layers:
+    get:
+      summary: Get all layer names within a namespace
       operationId: getLayers
-      security: []
+      parameters:
+        - $ref: '#/components/parameters/NamespaceParam'
       responses:
         '200':
           $ref: '#/components/responses/LayerListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
-  /layers/{layerName}:
+  /namespaces/{namespace}/layers/{layerName}:
     get:
-      summary: Get layer spec by name
+      summary: Get layer spec by name within a namespace
       operationId: getLayerByName
-      security: []
       parameters:
+        - $ref: '#/components/parameters/NamespaceParam'
         - $ref: '#/components/parameters/LayerNameParam'
       responses:
         '200':
           $ref: '#/components/responses/LayerSpecResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
 components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: >
+        Enforced by the API gateway, not by this service. The service itself never inspects the key - it only declares the requirement so that clients, and the "Authorize" dialog on this page, send it.
   parameters:
+    NamespaceParam:
+      name: namespace
+      in: path
+      required: true
+      description: The namespace the layer belongs to. Layer names are only unique within a namespace
+      schema:
+        type: string
+        example: data-2025
     LayerNameParam:
       name: layerName
       in: path
@@ -42,6 +72,16 @@ components:
         type: string
         example: buildings_polygon
   responses:
+    NamespaceListResponse:
+      description: A list of the namespaces this deployment serves
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NamespaceList'
+          example:
+            namespaces:
+              - name: data-2024
+              - name: data-2025
     LayerListResponse:
       description: A list of layers with their display aliases
       content:
@@ -82,7 +122,34 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: >
+        The `x-api-key` header was missing or rejected. Returned by the API gateway, which never forwards the request to this service.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
+    NamespaceSummary:
+      type: object
+      description: A namespace served by this deployment.
+      properties:
+        name:
+          type: string
+          description: Name of the namespace
+          example: data-2025
+      required:
+        - name
+    NamespaceList:
+      type: object
+      description: Response wrapper for the list of namespaces.
+      properties:
+        namespaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/NamespaceSummary'
+      required:
+        - namespaces
     LayerSummary:
       type: object
       description: Basic layer info returned in the list endpoint.
@@ -111,8 +178,7 @@ components:
     LayerSpec:
       type: object
       description: >
-        A layer and all of its properties. Groups rows from the `Property`
-        entity by `layerName`.
+        A layer and all of its properties. Groups rows from the `Property` entity by `layerName`.
       properties:
         layerName:
           type: string
@@ -133,10 +199,7 @@ components:
     Property:
       type: object
       description: >
-        A single property definition for a layer. Mirrors the `Property` entity,
-        minus `id` and `layerName` (which are implicit on the parent
-        `LayerSpec`). When the property has coded/enumerated values,
-        `possibleValues` is populated.
+        A single property definition for a layer. Mirrors the `Property` entity, minus `id` and `layerName` (which are implicit on the parent `LayerSpec`). When the property has coded/enumerated values, `possibleValues` is populated.
       properties:
         property:
           type: string
@@ -151,8 +214,7 @@ components:
         possibleValues:
           type: array
           description: >
-            Allowed values for properties that have a fixed set of coded values.
-            Omitted when the property accepts arbitrary values.
+            Allowed values for properties that have a fixed set of coded values. Omitted when the property accepts arbitrary values.
           items:
             type: string
       required:

@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll } from 'vitest';
 import nock, { disableNetConnect, enableNetConnect, cleanAll } from 'nock';
 import { fetchPropertyAliases } from '@src/sync/aliasEnricher';
-import { type ConfigType, getConfig, initConfig } from '@src/common/config';
+import type { EnrichmentConfig } from '@src/common/interfaces';
 
 const ENRICHMENT_ORIGIN = 'https://example.com';
 
@@ -13,11 +13,15 @@ const makeBody = (fields: Record<string, { display_name: string; type: string }>
 });
 
 describe('fetchPropertyAliases', function () {
-  let enrichmentConfig: ReturnType<ConfigType['getAll']>['enrichment'] & { enabled: true };
+  const enrichmentConfig: Extract<EnrichmentConfig, { enabled: true }> = {
+    enabled: true,
+    api: `${ENRICHMENT_ORIGIN}/{layerName}`,
+    propertiesPath: 'fields_list',
+    aliasField: 'display_name',
+    requestTimeoutMilliseconds: 10000,
+  };
 
-  beforeAll(async function () {
-    await initConfig(true);
-    enrichmentConfig = getConfig().get('enrichmentApi');
+  beforeAll(function () {
     disableNetConnect();
   });
 
@@ -37,7 +41,7 @@ describe('fetchPropertyAliases', function () {
     it('should call the API once with the layer name substituted into the URL', async function () {
       const scope = nock(ENRICHMENT_ORIGIN).get('/buildings').reply(200, makeBody({}));
 
-      await fetchPropertyAliases('buildings', 1, getConfig().get('enrichmentApi'));
+      await fetchPropertyAliases('buildings', 1, enrichmentConfig);
 
       expect(scope.isDone()).toBe(true);
     });

@@ -1,4 +1,5 @@
 {
+  "namespaces": ["data-2024", "data-2025"],
   "openapiConfig": {
     "filePath": "../../openapi3.yaml"
   },

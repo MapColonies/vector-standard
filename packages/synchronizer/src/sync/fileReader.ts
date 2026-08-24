@@ -1,27 +1,28 @@
 import { createHash } from 'node:crypto';
 import type { JsonValue } from 'type-fest';
-import { injectable } from 'tsyringe';
-import { FsRepository } from '@common/fs/fsRepository';
+import { inject, injectable } from 'tsyringe';
+import type { FsRepository } from '@common/fs/fsRepository';
 import type { LayerEnums } from '@common/interfaces';
+import { SERVICES } from '@common/constants';
 import { parseTypeMap, type TypeMap } from './typeMap';
-import { TypeMapError } from './errors';
-
-type AliasesFile = Record<string, Record<string, string>>;
-
-export type FileAliases = Map<string, Map<string, string>>;
+import { parseLayers } from './layersFile';
+import { parseAliases, type FileAliases } from './aliasesFile';
+import { AliasesFileError, LayersFileError, TypeMapError } from './errors';
 
 @injectable()
 export class FileReader {
-  public constructor(private readonly fsRepository: FsRepository) {}
+  public constructor(@inject(SERVICES.FS_REPOSITORY) private readonly fsRepository: FsRepository) {}
 
   public async readLayersWithChecksum(filePath: string): Promise<{ checksum: string; layers: LayerEnums[] }> {
     try {
       const buffer = await this.fsRepository.readFile(filePath);
       const checksum = createHash('sha256').update(buffer).digest('hex');
-      const layers = JSON.parse(buffer.toString()) as LayerEnums[];
-      return { checksum, layers };
+      return { checksum, layers: parseLayers(JSON.parse(buffer.toString()), filePath) };
     } catch (err) {
-      throw new Error(`Failed to read layers from ${filePath}`, { cause: err });
+      if (err instanceof LayersFileError) {
+        throw err;
+      }
+      throw new LayersFileError(filePath, 'failed to read or parse the file', err);
     }
   }
 
@@ -40,10 +41,12 @@ export class FileReader {
   public async readAliases(filePath: string): Promise<FileAliases> {
     try {
       const content = await this.fsRepository.readFile(filePath, 'utf-8');
-      const parsed = JSON.parse(content.toString()) as AliasesFile;
-      return new Map(Object.entries(parsed).map(([layer, props]) => [layer, new Map(Object.entries(props))]));
+      return parseAliases(JSON.parse(content.toString()), filePath);
     } catch (err) {
-      throw new Error(`Failed to read aliases from ${filePath}`, { cause: err });
+      if (err instanceof AliasesFileError) {
+        throw err;
+      }
+      throw new AliasesFileError(filePath, 'failed to read or parse the file', err);
     }
   }
 }

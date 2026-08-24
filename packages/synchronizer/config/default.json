@@ -3,27 +3,11 @@
     "offlineMode": true,
     "name": "standard-synchronizer"
   },
-  "layersFile": "./config/layers.json",
   "aliasesFile": "./config/aliases.json",
   "typeMapFile": "./config/typeMap.json",
   "schedule": "*/1 * * * *",
   "indexNameFormat": "{layerName}_{column}_idx",
-  "enrichment": {
-    "enabled": false
-  },
   "dbs": {
-    "source": {
-      "type": "postgres",
-      "host": "localhost",
-      "port": 5432,
-      "username": "postgres",
-      "password": "postgres",
-      "database": "postgres",
-      "ssl": {
-        "enabled": false
-      },
-      "schema": "query"
-    },
     "destination": {
       "type": "postgres",
       "host": "localhost",
@@ -41,15 +25,39 @@
       "accessKeyId": "key",
       "secretAccessKey": "keySecret",
       "forcePathStyle": true,
-      "region": "local",
-      "bucket": "vector-query-example",
-      "fileName": "mock-query.lua",
-      "layersVariable": "layers",
-      "aliasFieldName": "alias",
-      "idFieldName": "id",
-      "nameFieldName": "name"
+      "region": "local"
     }
   },
+  "namespaces": [
+    {
+      "name": "default",
+      "bucket": "vector-query-example",
+      "layersFile": "./config/layers/default.json",
+      "db": {
+        "type": "postgres",
+        "host": "localhost",
+        "port": 5432,
+        "username": "postgres",
+        "password": "postgres",
+        "database": "postgres",
+        "ssl": {
+          "enabled": false
+        },
+        "schema": "query"
+      },
+      "layerSource": {
+        "type": "sharedLua",
+        "fileName": "mock-query.lua",
+        "layersVariable": "layers",
+        "aliasFieldName": "alias",
+        "idFieldName": "id",
+        "nameFieldName": "name",
+        "enrichment": {
+          "enabled": false
+        }
+      }
+    }
+  ],
   "openapiConfig": {
     "filePath": "./openapi3.yaml",
     "basePath": "/docs",

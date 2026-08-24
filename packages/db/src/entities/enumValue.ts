@@ -6,6 +6,9 @@ export const ENUMS_REPOSITORY_SYMBOL = Symbol('EnumsRepository');
 @Entity('enum_value')
 export class EnumValue {
   @PrimaryColumn()
+  public namespace!: string;
+
+  @PrimaryColumn()
   public value!: string;
 
   @PrimaryColumn({ name: 'layer_name' })
@@ -16,6 +19,7 @@ export class EnumValue {
 
   @ManyToOne(() => Property, (p) => p.possibleValues, { onDelete: 'CASCADE' })
   @JoinColumn([
+    { name: 'namespace', referencedColumnName: 'namespace' },
     { name: 'layer_name', referencedColumnName: 'layerName' },
     { name: 'property', referencedColumnName: 'property' },
   ])
