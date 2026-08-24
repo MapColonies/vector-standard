@@ -21,7 +21,7 @@ const resolveOne = async (
   try {
     filePath = await s3Repository.downloadFile(bucket, key);
   } catch (err) {
-    logger.warn({ err: new LayerJsonFetchError(layer.layerName, key, err) }, 'Failed to fetch layer JSON, skipping layer');
+    logger.warn({ msg: `Failed to fetch layer JSON ${key}, skipping layer`, err: new LayerJsonFetchError(layer.layerName, key, err) });
     return undefined;
   }
 
@@ -34,7 +34,7 @@ const resolveOne = async (
       source: layerSource.perLayerJson,
     };
   } catch (err) {
-    logger.warn({ err: new LayerJsonParseError(layer.layerName, key, err) }, 'Failed to read or parse layer JSON, skipping layer');
+    logger.warn({ msg: `Failed to read or parse layer JSON ${key}, skipping layer`, err: new LayerJsonParseError(layer.layerName, key, err) });
     return undefined;
   }
 };
@@ -52,7 +52,7 @@ export class PerLayerJsonSource implements LayerSourceStrategy {
     const records = new Map<string, LayerSourceRecord>();
     for (const layer of layers) {
       if (layer.sourceKey === undefined) {
-        this.logger.warn({ layerName: layer.layerName }, 'No sourceKey configured for perLayerJson layer, skipping');
+        this.logger.warn({ msg: `No sourceKey configured for perLayerJson layer ${layer.layerName}, skipping` });
         continue;
       }
 

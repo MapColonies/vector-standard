@@ -33,7 +33,7 @@ export class CronManager {
         try {
           await this.tickNamespace(namespace, typeMap, fileAliases);
         } catch (err) {
-          this.logger.error({ namespace: namespace.name, err }, 'namespace sync tick failed, continuing with next namespace');
+          this.logger.error({ msg: `Failed to sync namespace ${namespace.name}, skipping`, err });
         }
       }
     });
@@ -61,8 +61,8 @@ export class CronManager {
       try {
         await namespace.sourceDataSource.initialize();
       } catch (err) {
-        this.logger.warn({ namespace: namespace.name, err }, 'source database unreachable, skipping namespace for this tick');
-        return;
+        this.logger.warn({ msg: `Source database unreachable for namespace ${namespace.name}, skipping`, err });
+        throw err;
       }
     }
 
@@ -80,12 +80,12 @@ export class CronManager {
       await namespace.dal.syncLayer(namespace.name, layer.layerName, record.layerId ?? null, record.source, record.alias);
       try {
         const affected = await namespace.dal.syncProperties(namespace.name, layer, typeMap, fileAliases, record.propertyAliases);
-        this.logger.info({ namespace: namespace.name, layer, affected }, 'synced properties');
+        this.logger.info({ msg: `Synced properties for ${namespace.name}/${layer.layerName}`, affected });
       } catch (err) {
-        this.logger.warn({ namespace: namespace.name, layerName: layer.layerName, err }, 'failed to sync properties, skipping to enum sync');
+        this.logger.warn({ msg: `Failed to sync properties for ${namespace.name}/${layer.layerName}, skipping to enum sync`, err });
       }
       const enumsAffected = await namespace.dal.syncEnum(namespace.name, layer);
-      this.logger.info({ namespace: namespace.name, layer, enumsAffected }, 'synced enums');
+      this.logger.info({ msg: `Synced enums for ${namespace.name}/${layer.layerName}`, enumsAffected });
       if (layersChanged) {
         await namespace.dal.deleteStaleEnumValues(namespace.name, layer.layerName, layer.enums);
       }

@@ -12,10 +12,7 @@ const resolveOne = async (layer: LayerEnums, luaLayer: LuaLayer, config: SharedL
     try {
       propertyAliases = await fetchPropertyAliases(layer.layerName, luaLayer.layerId, config.enrichment);
     } catch (err) {
-      logger.warn(
-        { layerName: layer.layerName, layerId: luaLayer.layerId, err },
-        'Failed to fetch property aliases from enrichment API, continuing without them'
-      );
+      logger.warn({ msg: `Failed to fetch property aliases for ${layer.layerName} (${luaLayer.layerId}), continuing without them`, err });
     }
   }
 
@@ -52,7 +49,7 @@ export class SharedLuaSource implements LayerSourceStrategy {
     for (const layer of layers) {
       const luaLayer = luaLayers.get(layer.layerName);
       if (luaLayer === undefined) {
-        this.logger.warn({ layerName: layer.layerName }, 'Layer not found in lua file, skipping');
+        this.logger.warn({ msg: `Layer ${layer.layerName} not found in lua file, skipping` });
         continue;
       }
       records.set(layer.layerName, await resolveOne(layer, luaLayer, this.config, this.logger));

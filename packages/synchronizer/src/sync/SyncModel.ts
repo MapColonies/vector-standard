@@ -155,11 +155,11 @@ export class SyncModel {
         const excluded = excludedPropertySet(layer.excludeProperties);
         const columns = (await this.getTableColumns(layer.layerName)).filter(({ columnName }) => !excluded.has(columnName.toLowerCase()));
         if (excluded.size > 0) {
-          this.logger.debug({ layerName: layer.layerName, excludeProperties: layer.excludeProperties }, 'Excluding properties from sync');
+          this.logger.debug({ msg: `Excluding properties from sync for ${layer.layerName}`, excludeProperties: layer.excludeProperties });
         }
 
         const properties = columnInfosToProperties(columns, namespace, layer.layerName, typeMap, (columnName, udtName) => {
-          this.logger.warn({ layerName: layer.layerName, columnName, udtName }, 'Unknown column type, skipping property');
+          this.logger.warn({ msg: `Unknown column type ${udtName} for ${layer.layerName}.${columnName}, skipping property` });
         });
 
         const fileLayerAliases = resolveFileAliases(fileAliases, namespace, layer.layerName);
@@ -276,7 +276,7 @@ export class SyncModel {
 
     if (existing.length !== layer.enums.length) {
       const missing = layer.enums.filter((col) => !tableColumns.has(col));
-      this.logger.warn({ layerName: layer.layerName, columns: missing }, 'Enum columns do not exist in table, skipping');
+      this.logger.warn({ msg: `Enum columns do not exist in table ${layer.layerName}, skipping`, columns: missing });
     }
 
     return existing;
