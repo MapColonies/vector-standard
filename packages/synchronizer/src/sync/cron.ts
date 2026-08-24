@@ -6,7 +6,8 @@ import { SERVICES, NAMESPACE_HANDLES } from '@common/constants';
 import { ConfigType } from '@common/config';
 import { startActivePromisifiedSpan } from '@common/tracing/util';
 import { SyncSpanName } from '@common/tracing/sync';
-import { FileReader, type FileAliases } from './fileReader';
+import { FileReader } from './fileReader';
+import type { FileAliases } from './aliasesFile';
 import type { TypeMap } from './typeMap';
 import type { NamespaceHandle } from './namespaceHandle/types';
 

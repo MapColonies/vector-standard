@@ -20,7 +20,8 @@ import { registerExternalValues } from '@src/containerConfig';
 import { SERVICES, NAMESPACE_HANDLES } from '@src/common/constants';
 import type { SyncModel } from '@src/sync/SyncModel';
 import { schemaOf } from '@src/sync/helpers';
-import { FileReader, type FileAliases } from '@src/sync/fileReader';
+import { FileReader } from '@src/sync/fileReader';
+import type { FileAliases } from '@src/sync/aliasesFile';
 import type { TypeMap } from '@src/sync/typeMap';
 import type { NamespaceHandle } from '@src/sync/namespaceHandle/types';
 

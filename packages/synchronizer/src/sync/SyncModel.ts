@@ -22,7 +22,7 @@ import {
   StalePropertiesDeletionError,
   TableColumnsQueryError,
 } from './errors';
-import { resolveFileAliases, type FileAliases } from './fileReader';
+import { resolveFileAliases, type FileAliases } from './aliasesFile';
 import type { TypeMap } from './typeMap';
 import type { LayerSourceRecord } from './layerSource/types';
 
