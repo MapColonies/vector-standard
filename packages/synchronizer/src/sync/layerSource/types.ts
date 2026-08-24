@@ -15,3 +15,9 @@ export interface LayerSourceStrategy {
 export interface FileDownloader {
   downloadFile: (bucket: string, key: string) => Promise<string>;
 }
+
+export interface LuaLayer {
+  layerId: number;
+  layerName: string;
+  alias: string;
+}

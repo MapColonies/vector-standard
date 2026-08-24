@@ -3,8 +3,8 @@ import { layerSource } from '@db';
 import type { LayerEnums, SharedLuaSourceConfig } from '@common/interfaces';
 import type { FsRepository } from '@common/fs/fsRepository';
 import { fetchPropertyAliases } from '../aliasEnricher';
-import { parseLuaLayers, type LuaLayer } from '../luaParser';
-import type { LayerSourceRecord, FileDownloader, LayerSourceStrategy } from './types';
+import { parseLuaLayers } from '../luaParser';
+import type { LayerSourceRecord, FileDownloader, LayerSourceStrategy, LuaLayer } from './types';
 
 const resolveOne = async (layer: LayerEnums, luaLayer: LuaLayer, config: SharedLuaSourceConfig, logger: Logger): Promise<LayerSourceRecord> => {
   let propertyAliases = new Map<string, string>();

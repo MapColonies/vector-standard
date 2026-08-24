@@ -1,13 +1,38 @@
 import { createHash } from 'node:crypto';
+import ajvCtor from 'ajv';
 import type { JsonValue } from 'type-fest';
 import { inject, injectable } from 'tsyringe';
 import type { FsRepository } from '@common/fs/fsRepository';
 import type { LayerEnums } from '@common/interfaces';
 import { ALL_KEYS_SELECTOR, SERVICES } from '@common/constants';
 import { parseTypeMap, type TypeMap } from './typeMap';
-import { TypeMapError } from './errors';
+import { AliasesFileError, LayersFileError, TypeMapError } from './errors';
 
 type AliasesFile = Record<string, Record<string, Record<string, string>>>;
+
+const ajv = new ajvCtor();
+
+const isLayersFile = ajv.compile<LayerEnums[]>({
+  type: 'array',
+  items: {
+    type: 'object',
+    properties: {
+      layerName: { type: 'string' },
+      enums: { type: 'array', items: { type: 'string' } },
+      excludeProperties: { type: 'array', items: { type: 'string' } },
+      sourceKey: { type: 'string' },
+    },
+    required: ['layerName', 'enums'],
+  },
+});
+
+const isAliasesFile = ajv.compile<AliasesFile>({
+  type: 'object',
+  additionalProperties: {
+    type: 'object',
+    additionalProperties: { type: 'object', additionalProperties: { type: 'string' } },
+  },
+});
 
 export type FileAliases = Map<string, Map<string, Map<string, string>>>;
 
@@ -26,14 +51,21 @@ export class FileReader {
   public constructor(@inject(SERVICES.FS_REPOSITORY) private readonly fsRepository: FsRepository) {}
 
   public async readLayersWithChecksum(filePath: string): Promise<{ checksum: string; layers: LayerEnums[] }> {
+    let checksum: string;
+    let parsed: unknown;
     try {
       const buffer = await this.fsRepository.readFile(filePath);
-      const checksum = createHash('sha256').update(buffer).digest('hex');
-      const layers = JSON.parse(buffer.toString()) as LayerEnums[];
-      return { checksum, layers };
+      checksum = createHash('sha256').update(buffer).digest('hex');
+      parsed = JSON.parse(buffer.toString());
     } catch (err) {
-      throw new Error(`Failed to read layers from ${filePath}`, { cause: err });
+      throw new LayersFileError(filePath, 'failed to read or parse the file', err);
     }
+
+    if (!isLayersFile(parsed)) {
+      throw new LayersFileError(filePath, ajv.errorsText(isLayersFile.errors));
+    }
+
+    return { checksum, layers: parsed };
   }
 
   public async readTypeMap(filePath: string): Promise<TypeMap> {
@@ -49,12 +81,16 @@ export class FileReader {
   }
 
   public async readAliases(filePath: string): Promise<FileAliases> {
-    let parsed: AliasesFile;
+    let parsed: unknown;
     try {
       const content = await this.fsRepository.readFile(filePath, 'utf-8');
-      parsed = JSON.parse(content.toString()) as AliasesFile;
+      parsed = JSON.parse(content.toString());
     } catch (err) {
-      throw new Error(`Failed to read aliases from ${filePath}`, { cause: err });
+      throw new AliasesFileError(filePath, 'failed to read or parse the file', err);
+    }
+
+    if (!isAliasesFile(parsed)) {
+      throw new AliasesFileError(filePath, ajv.errorsText(isAliasesFile.errors));
     }
 
     return new Map(

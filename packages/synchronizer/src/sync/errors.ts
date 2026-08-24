@@ -60,6 +60,18 @@ export class TypeMapError extends SyncError {
   }
 }
 
+export class LayersFileError extends SyncError {
+  public constructor(filePath: string, reason: string, cause?: unknown) {
+    super(`Invalid layers file ${filePath}: ${reason}`, { cause });
+  }
+}
+
+export class AliasesFileError extends SyncError {
+  public constructor(filePath: string, reason: string, cause?: unknown) {
+    super(`Invalid aliases file ${filePath}: ${reason}`, { cause });
+  }
+}
+
 export class EnumSaveError extends SyncError {
   public constructor(layerName: string, cause?: unknown) {
     super(`Failed to save enum values for ${layerName}`, { cause });
