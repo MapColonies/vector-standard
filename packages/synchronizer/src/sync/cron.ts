@@ -8,7 +8,7 @@ import { startActivePromisifiedSpan } from '@common/tracing/util';
 import { SyncSpanName } from '@common/tracing/sync';
 import { FileReader, type FileAliases } from './fileReader';
 import type { TypeMap } from './typeMap';
-import type { NamespaceHandle } from './namespaceHandle';
+import type { NamespaceHandle } from './namespaceHandle/types';
 
 export const CRON_MANAGER_SYMBOL = Symbol('cronManagerSymbol');
 
