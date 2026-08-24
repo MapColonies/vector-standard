@@ -3,11 +3,9 @@ import type { JsonValue } from 'type-fest';
 import { inject, injectable } from 'tsyringe';
 import type { FsRepository } from '@common/fs/fsRepository';
 import type { LayerEnums } from '@common/interfaces';
-import { SERVICES } from '@common/constants';
+import { ALL_KEYS_SELECTOR, SERVICES } from '@common/constants';
 import { parseTypeMap, type TypeMap } from './typeMap';
 import { TypeMapError } from './errors';
-
-const ALL = '*';
 
 type AliasesFile = Record<string, Record<string, Record<string, string>>>;
 
@@ -15,9 +13,9 @@ export type FileAliases = Map<string, Map<string, Map<string, string>>>;
 
 export const resolveFileAliases = (fileAliases: FileAliases, namespace: string, layerName: string): Map<string, string> => {
   const tiers = [
-    fileAliases.get(ALL)?.get(ALL),
-    fileAliases.get(ALL)?.get(layerName),
-    fileAliases.get(namespace)?.get(ALL),
+    fileAliases.get(ALL_KEYS_SELECTOR)?.get(ALL_KEYS_SELECTOR),
+    fileAliases.get(ALL_KEYS_SELECTOR)?.get(layerName),
+    fileAliases.get(namespace)?.get(ALL_KEYS_SELECTOR),
     fileAliases.get(namespace)?.get(layerName),
   ];
   return new Map(tiers.filter((tier): tier is Map<string, string> => tier !== undefined).flatMap((tier) => [...tier]));

@@ -28,6 +28,8 @@ export const REPOSITORIES = [
   { entity: EnumValue, token: ENUMS_REPOSITORY_SYMBOL },
 ] as const;
 
+export const ALL_KEYS_SELECTOR = '*';
+
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SERVICES = {
   LOGGER: Symbol('Logger'),
