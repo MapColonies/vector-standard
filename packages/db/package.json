@@ -21,7 +21,7 @@
   "dependencies": {
     "@map-colonies/config": "^4.0.1",
     "@map-colonies/schemas": "*",
-    "pg": "^8.20.0",
+    "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.10.0",
     "typeorm": "^0.3.20"
