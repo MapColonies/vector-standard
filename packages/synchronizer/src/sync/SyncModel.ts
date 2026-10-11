@@ -10,7 +10,7 @@ import { SERVICES, SOURCE_DATA_SOURCE_PROVIDER } from '@common/constants';
 import { ConfigType } from '@common/config';
 import { InsertPropertyDTO, LayerEnums } from '@src/common/interfaces';
 import { CaseInsensitiveMap } from '@src/common/caseInsensitiveMap';
-import { columnInfosToProperties, excludedPropertySet, schemaOf } from './helpers';
+import { columnInfosToProperties, excludedPropertySet, schemaOf, toPostgresIdentifier } from './helpers';
 import {
   EnumDistinctValuesError,
   EnumIndexError,
@@ -273,7 +273,7 @@ export class SyncModel {
       await Promise.all(
         layer.enums.map(async (col) => {
           const format = this.config.get('indexNameFormat');
-          const indexName = format.replace('{layerName}', layer.layerName).replace('{column}', col);
+          const indexName = toPostgresIdentifier(format.replace('{layerName}', layer.layerName).replace('{column}', col));
           await this.sourceDataSource.query(`CREATE INDEX IF NOT EXISTS "${indexName}" ON "${schema}"."${layer.layerName}" ("${col}")`);
         })
       );

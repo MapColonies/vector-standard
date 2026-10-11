@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { columnType } from '@db';
 import type { ColumnType } from '@db';
 import type { DataSource } from 'typeorm';
@@ -5,6 +6,10 @@ import type { JsonObject, JsonValue } from 'type-fest';
 import type { InsertPropertyDTO } from '@common/interfaces';
 import type { ColumnInfo } from './SyncModel';
 import type { TypeMap } from './typeMap';
+
+const MAX_IDENTIFIER_BYTES = 63;
+const IDENTIFIER_HASH_LENGTH = 8;
+const IDENTIFIER_SEPARATOR = '_';
 
 const geometryTypePattern = /^geo(?:metry|graphy)\((\w+)(?:,\s*-?\d+)?\)$/;
 
@@ -66,4 +71,22 @@ export const columnInfosToProperties = (
     }
   }
   return result;
+};
+
+export const toPostgresIdentifier = (name: string): string => {
+  if (Buffer.byteLength(name) <= MAX_IDENTIFIER_BYTES) {
+    return name;
+  }
+
+  const hash = createHash('sha256').update(name).digest('hex').slice(0, IDENTIFIER_HASH_LENGTH);
+  const prefixBytes = MAX_IDENTIFIER_BYTES - IDENTIFIER_HASH_LENGTH - IDENTIFIER_SEPARATOR.length;
+  let prefix = '';
+  for (const char of name) {
+    if (Buffer.byteLength(prefix + char) > prefixBytes) {
+      break;
+    }
+    prefix += char;
+  }
+
+  return `${prefix}${IDENTIFIER_SEPARATOR}${hash}`;
 };

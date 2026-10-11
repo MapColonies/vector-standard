@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, it, expect, vi } from 'vitest';
 import type { JsonValue } from 'type-fest';
 import { columnType } from '@map-colonies/vector-standard-db';
-import { columnInfosToProperties } from '@src/sync/helpers';
+import { columnInfosToProperties, toPostgresIdentifier } from '@src/sync/helpers';
 import { parseTypeMap } from '@src/sync/typeMap';
 import type { ColumnInfo } from '@src/sync/SyncModel';
 
@@ -138,5 +138,38 @@ describe('columnInfosToProperties', function () {
       expect(result.map((p) => p.property)).toEqual(['name', 'height']);
       expect(onUnknown).toHaveBeenCalledExactlyOnceWith('lsn', 'pg_lsn');
     });
+  });
+});
+
+describe('toPostgresIdentifier', function () {
+  const longLayer = 'gdb.a_very_long_layer_name_for_buildings_polygons_in_the_north';
+
+  it('should keep names that already fit in 63 bytes unchanged', function () {
+    expect(toPostgresIdentifier('buildings_status_idx')).toBe('buildings_status_idx');
+  });
+
+  it('should shorten long names to exactly 63 bytes', function () {
+    const result = toPostgresIdentifier(`${longLayer}_building_type_code_idx`);
+
+    expect(Buffer.byteLength(result)).toBe(63);
+  });
+
+  it('should keep names that share their first 63 bytes distinct', function () {
+    const first = toPostgresIdentifier(`${longLayer}_building_type_code_idx`);
+    const second = toPostgresIdentifier(`${longLayer}_building_type_status_idx`);
+
+    expect(first).not.toBe(second);
+  });
+
+  it('should return the same name for the same input', function () {
+    const name = `${longLayer}_building_type_code_idx`;
+
+    expect(toPostgresIdentifier(name)).toBe(toPostgresIdentifier(name));
+  });
+
+  it('should not exceed 63 bytes for multi-byte names', function () {
+    const result = toPostgresIdentifier(`${'בניינים_'.repeat(6)}idx`);
+
+    expect(Buffer.byteLength(result)).toBeLessThanOrEqual(63);
   });
 });
