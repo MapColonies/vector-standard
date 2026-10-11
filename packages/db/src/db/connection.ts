@@ -37,7 +37,7 @@ export const createSslOptions = (ssl: SslConfig): SslOptions => {
   return {
     key: readFileSync(ssl.key),
     cert: readFileSync(ssl.cert),
-    ca: ssl.ca !== undefined ? readFileSync(ssl.ca) : undefined,
+    ca: ssl.ca !== undefined && ssl.ca !== '' ? readFileSync(ssl.ca) : undefined,
   };
 };
 
