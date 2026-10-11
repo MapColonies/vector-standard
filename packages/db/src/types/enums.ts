@@ -14,3 +14,10 @@ export const columnType = {
 } as const;
 
 export type ColumnType = (typeof columnType)[keyof typeof columnType];
+
+export const layerSource = {
+  sharedLua: 'sharedLua',
+  perLayerJson: 'perLayerJson',
+} as const;
+
+export type LayerSource = (typeof layerSource)[keyof typeof layerSource];

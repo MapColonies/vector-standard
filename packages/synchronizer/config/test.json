@@ -1,17 +1,41 @@
 {
   "dbs": {
-    "source": {
-      "schema": "test_source"
-    },
     "destination": {
       "schema": "test_dest"
     }
   },
-  "enrichmentApi": {
-    "enabled": true,
-    "api": "https://example.com/{layerName}",
-    "propertiesPath": "fields_list",
-    "aliasField": "display_name",
-    "requestTimeoutMilliseconds": 10000
-  }
+  "namespaces": [
+    {
+      "name": "test",
+      "bucket": "vector-query-example",
+      "layersFile": "./config/layers/test.json",
+      "db": {
+        "type": "postgres",
+        "host": "localhost",
+        "port": 5432,
+        "username": "postgres",
+        "password": "postgres",
+        "database": "postgres",
+        "ssl": {
+          "enabled": false
+        },
+        "schema": "test_source"
+      },
+      "layerSource": {
+        "type": "sharedLua",
+        "fileName": "mock-query.lua",
+        "layersVariable": "layers",
+        "aliasFieldName": "alias",
+        "idFieldName": "id",
+        "nameFieldName": "name",
+        "enrichment": {
+          "enabled": true,
+          "api": "https://example.com/{layerName}",
+          "propertiesPath": "fields_list",
+          "aliasField": "display_name",
+          "requestTimeoutMilliseconds": 10000
+        }
+      }
+    }
+  ]
 }

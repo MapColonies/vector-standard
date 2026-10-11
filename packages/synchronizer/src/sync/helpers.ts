@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { columnType } from '@db';
 import type { ColumnType } from '@db';
 import type { DataSource } from 'typeorm';
@@ -5,6 +6,10 @@ import type { JsonObject, JsonValue } from 'type-fest';
 import type { InsertPropertyDTO } from '@common/interfaces';
 import type { ColumnInfo } from './SyncModel';
 import type { TypeMap } from './typeMap';
+
+const MAX_IDENTIFIER_BYTES = 63;
+const IDENTIFIER_HASH_LENGTH = 8;
+const IDENTIFIER_SEPARATOR = '_';
 
 const geometryTypePattern = /^geo(?:metry|graphy)\((\w+)(?:,\s*-?\d+)?\)$/;
 
@@ -16,7 +21,6 @@ const normalizeUdtName = (rawUdtName: string, typeMap: TypeMap): ColumnType | un
     return plain;
   }
 
-  // Strip length/precision modifier e.g. "character varying(255)" → "character varying"
   const withoutModifier = udtName.replace(/\s*\(\d+(?:,\s*\d+)?\)$/, '');
   if (withoutModifier !== udtName) {
     const stripped = typeMap.types.get(withoutModifier);
@@ -52,6 +56,7 @@ export const schemaOf = (dataSource: DataSource): string => {
 
 export const columnInfosToProperties = (
   columnInfos: ColumnInfo[],
+  namespace: string,
   layerName: string,
   typeMap: TypeMap,
   onUnknown?: (columnName: string, udtName: string) => void
@@ -62,8 +67,26 @@ export const columnInfosToProperties = (
     if (type === undefined) {
       onUnknown?.(columnName, udtName);
     } else {
-      result.push({ layerName, property: columnName, type });
+      result.push({ namespace, layerName, property: columnName, type });
     }
   }
   return result;
+};
+
+export const toPostgresIdentifier = (name: string): string => {
+  if (Buffer.byteLength(name) <= MAX_IDENTIFIER_BYTES) {
+    return name;
+  }
+
+  const hash = createHash('sha256').update(name).digest('hex').slice(0, IDENTIFIER_HASH_LENGTH);
+  const prefixBytes = MAX_IDENTIFIER_BYTES - IDENTIFIER_HASH_LENGTH - IDENTIFIER_SEPARATOR.length;
+  let prefix = '';
+  for (const char of name) {
+    if (Buffer.byteLength(prefix + char) > prefixBytes) {
+      break;
+    }
+    prefix += char;
+  }
+
+  return `${prefix}${IDENTIFIER_SEPARATOR}${hash}`;
 };

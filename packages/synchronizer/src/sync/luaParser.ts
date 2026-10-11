@@ -1,3 +1,5 @@
+import type { LuaLayer } from './layerSource/types';
+
 const NOT_FOUND = -1;
 
 export const extractBlock = (content: string, variableName: string): string | null => {
@@ -25,12 +27,6 @@ export const extractBlock = (content: string, variableName: string): string | nu
 
   return null;
 };
-
-export interface LuaLayer {
-  layerId: number;
-  layerName: string;
-  alias: string;
-}
 
 export const parseLuaLayers = (
   content: string,

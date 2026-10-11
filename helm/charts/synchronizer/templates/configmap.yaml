@@ -32,8 +32,6 @@ data:
 
   INDEX_NAME_FORMAT: {{ .Values.env.indexNameFormat | quote }}
 
-  LAYERS_FILE_PATH: {{ .Values.env.layersFile | quote }}
-
   ALIASES_FILE_PATH: {{ .Values.env.aliasesFile | quote }}
 
   {{- if .Values.typeMap.enabled }}
@@ -47,21 +45,8 @@ data:
   S3_SSL_ENABLED: {{ .sslEnabled | quote }}
   S3_SIG_VERSION: {{ .sigVersion | quote }}
   S3_STORAGE_CLASS: {{ .storageClass | quote }}
-  S3_BUCKET: {{ .bucket | quote }}
-  S3_FILE_NAME: {{ .fileName | quote }}
-  S3_LAYERS_VARIABLE: {{ .layersVariable | quote }}
   {{- end }}
 
-  {{- with .Values.env.enrichment }}
-  ENRICHMENT_ENABLED: {{ .enabled | quote }}
-  {{- if .enabled }}
-  ENRICHMENT_API_URL: {{ .api | quote }}
-  ENRICHMENT_PROPERTIES_PATH: {{ .propertiesPath | quote }}
-  ENRICHMENT_ALIAS_FIELD: {{ .aliasField | quote }}
-  ENRICHMENT_REQUEST_TIMEOUT_MILLISECONDS: {{ .requestTimeoutMilliseconds | quote }}
-  {{- end }}
-  {{- end }}
-  {{- include "synchronizer.dbEnvBlock" (dict "prefix" "SOURCE_DB" "db" .Values.dbs.sourceDb) | nindent 2 }}
   {{- include "synchronizer.dbEnvBlock" (dict "prefix" "DEST_DB" "db" .Values.dbs.destinationDb) | nindent 2 }}
 
 

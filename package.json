@@ -24,6 +24,6 @@
     "lerna": "^6.6.2"
   },
   "dependencies": {
-    "@map-colonies/schemas": "1.26.0"
+    "@map-colonies/schemas": "^1.27.0"
   }
 }

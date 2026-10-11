@@ -8,9 +8,9 @@ export default async function setup(): Promise<void> {
 
   const pgClient = new Client({ ...dbConfig, user: dbConfig.username, ssl: createSslOptions(dbConfig.ssl) });
   await pgClient.connect();
-  await pgClient.query('DROP TABLE IF EXISTS "enum_value" CASCADE');
-  await pgClient.query('DROP TABLE IF EXISTS "property" CASCADE');
-  await pgClient.query('DROP TABLE IF EXISTS "layer" CASCADE');
-  await pgClient.query('DROP TYPE IF EXISTS "column_type"');
+  await pgClient.query(`DROP TABLE IF EXISTS "${dbConfig.schema}"."enum_value" CASCADE`);
+  await pgClient.query(`DROP TABLE IF EXISTS "${dbConfig.schema}"."property" CASCADE`);
+  await pgClient.query(`DROP TABLE IF EXISTS "${dbConfig.schema}"."layer" CASCADE`);
+  await pgClient.query(`DROP TYPE IF EXISTS "${dbConfig.schema}"."column_type"`);
   await pgClient.end();
 }

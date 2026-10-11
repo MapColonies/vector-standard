@@ -52,6 +52,8 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+namespaces: []
+
 db:
   host: localhost
   port: 5432

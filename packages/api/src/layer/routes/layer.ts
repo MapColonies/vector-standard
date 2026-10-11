@@ -6,8 +6,8 @@ const layerRouterFactory: FactoryFunction<Router> = (dependencyContainer) => {
   const router = Router();
   const controller = dependencyContainer.resolve(LayerController);
 
-  router.get('/', controller.getLayers);
-  router.get('/:layerName', controller.getLayerByName);
+  router.get('/:namespace/layers', controller.getLayers);
+  router.get('/:namespace/layers/:layerName', controller.getLayerByName);
 
   return router;
 };

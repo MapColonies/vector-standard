@@ -4,9 +4,9 @@ import { injectable, inject } from 'tsyringe';
 import { RequestHandler } from 'express';
 import { SERVICES } from '@common/constants';
 import { LayerManager } from '../models/layerManager';
-import { GetLayerByNameParam, GetLayersResponse } from '../types/layerTypes';
+import { GetLayerByNameParam, GetLayersParam, GetLayersResponse } from '../types/layerTypes';
 
-type GetLayersHandler = RequestHandler<undefined, GetLayersResponse>;
+type GetLayersHandler = RequestHandler<GetLayersParam, GetLayersResponse>;
 type GetLayerByNameHandler = RequestHandler<GetLayerByNameParam, LayerSpec>;
 
 @injectable()
@@ -17,24 +17,25 @@ export class LayerController {
   ) {}
 
   public getLayers: GetLayersHandler = async (req, res, next) => {
+    const { namespace } = req.params;
     try {
-      const layers = await this.manager.getLayers();
-      this.logger.debug({ msg: `got ${layers.length} layers` });
+      const layers = await this.manager.getLayers(namespace);
+      this.logger.debug({ msg: `got ${layers.length} layers for namespace ${namespace}` });
       return res.json({ layers });
     } catch (error) {
-      this.logger.error({ msg: 'failed to get layers', err: error });
+      this.logger.error({ msg: `failed to get layers for namespace ${namespace}`, err: error });
       next(error);
     }
   };
 
   public getLayerByName: GetLayerByNameHandler = async (req, res, next) => {
-    const { layerName } = req.params;
+    const { namespace, layerName } = req.params;
     try {
-      const layer = await this.manager.getLayerSpecByName(layerName);
-      this.logger.debug({ msg: `got layer: ${layerName}` });
+      const layer = await this.manager.getLayerSpecByName(namespace, layerName);
+      this.logger.debug({ msg: `got layer: ${layerName} for namespace ${namespace}` });
       return res.json(layer);
     } catch (error) {
-      this.logger.error({ msg: 'failed to get layer by name', layerName, err: error });
+      this.logger.error({ msg: `failed to get layer ${layerName} for namespace ${namespace}`, err: error });
       next(error);
     }
   };

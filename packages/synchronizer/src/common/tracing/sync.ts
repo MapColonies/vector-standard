@@ -2,6 +2,7 @@
 export const SyncSpanName = {
   SYNC_TICK: 'sync.tick',
   SYNC_LAYER: 'sync.layer',
+  SYNC_FULL_LAYER: 'sync.layer.full',
   SYNC_PROPERTIES: 'sync.properties',
   SYNC_ENUM: 'sync.enum',
   LOAD_LUA_DATA: 'sync.lua.load',
@@ -15,6 +16,7 @@ export type SyncSpanName = (typeof SyncSpanName)[keyof typeof SyncSpanName];
 export const SyncAttributes = {
   LAYER_NAME: 'layer.name',
   LAYER_ID: 'layer.id',
+  NAMESPACE: 'namespace',
   LAYERS_COUNT: 'layers.count',
   LAYERS_CHANGED: 'layers.changed',
   PROPERTIES_AFFECTED: 'properties.affected',

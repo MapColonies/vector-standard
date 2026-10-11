@@ -1,0 +1,14 @@
+{{- if .Values.enabled -}}
+{{- $names := list -}}
+{{- range .Values.namespaces -}}
+{{- $names = append $names .name -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "api.fullname" . }}-namespaces
+  labels:
+    {{- include "api.labels" . | nindent 4 }}
+data:
+  production.json: {{ dict "namespaces" $names | toPrettyJson | quote }}
+{{- end }}

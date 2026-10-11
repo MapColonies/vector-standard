@@ -4,14 +4,31 @@
 
 import type { TypedRequestHandlers as ImportedTypedRequestHandlers } from '@map-colonies/openapi-helpers/typedRequestHandler';
 export type paths = {
-  '/layers': {
+  '/namespaces': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** Get all layer names */
+    /** Get all namespaces */
+    get: operations['getNamespaces'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/namespaces/{namespace}/layers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get all layer names within a namespace */
     get: operations['getLayers'];
     put?: never;
     post?: never;
@@ -21,14 +38,14 @@ export type paths = {
     patch?: never;
     trace?: never;
   };
-  '/layers/{layerName}': {
+  '/namespaces/{namespace}/layers/{layerName}': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** Get layer spec by name */
+    /** Get layer spec by name within a namespace */
     get: operations['getLayerByName'];
     put?: never;
     post?: never;
@@ -42,6 +59,18 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
   schemas: {
+    /** @description A namespace served by this deployment. */
+    NamespaceSummary: {
+      /**
+       * @description Name of the namespace
+       * @example data-2025
+       */
+      name: string;
+    };
+    /** @description Response wrapper for the list of namespaces. */
+    NamespaceList: {
+      namespaces: components['schemas']['NamespaceSummary'][];
+    };
     /** @description Basic layer info returned in the list endpoint. */
     LayerSummary: {
       /**
@@ -103,6 +132,27 @@ export type components = {
     };
   };
   responses: {
+    /** @description A list of the namespaces this deployment serves */
+    NamespaceListResponse: {
+      headers: {
+        [name: string]: unknown;
+      };
+      content: {
+        /**
+         * @example {
+         *       "namespaces": [
+         *         {
+         *           "name": "data-2024"
+         *         },
+         *         {
+         *           "name": "data-2025"
+         *         }
+         *       ]
+         *     }
+         */
+        'application/json': components['schemas']['NamespaceList'];
+      };
+    };
     /** @description A list of layers with their display aliases */
     LayerListResponse: {
       headers: {
@@ -175,6 +225,8 @@ export type components = {
     };
   };
   parameters: {
+    /** @description The namespace the layer belongs to. Layer names are only unique within a namespace */
+    NamespaceParam: string;
     /** @description The name of the layer (matches `Property.layerName`) */
     LayerNameParam: string;
   };
@@ -184,11 +236,26 @@ export type components = {
 };
 export type $defs = Record<string, never>;
 export interface operations {
-  getLayers: {
+  getNamespaces: {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: components['responses']['NamespaceListResponse'];
+    };
+  };
+  getLayers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The namespace the layer belongs to. Layer names are only unique within a namespace */
+        namespace: components['parameters']['NamespaceParam'];
+      };
       cookie?: never;
     };
     requestBody?: never;
@@ -202,6 +269,8 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
+        /** @description The namespace the layer belongs to. Layer names are only unique within a namespace */
+        namespace: components['parameters']['NamespaceParam'];
         /** @description The name of the layer (matches `Property.layerName`) */
         layerName: components['parameters']['LayerNameParam'];
       };

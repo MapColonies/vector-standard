@@ -1,16 +1,22 @@
-FROM node:24-alpine
+FROM node:24.10.0-alpine3.22
 
-WORKDIR /usr/app
+RUN apk add dumb-init
 
-COPY ./package*.json ./
-COPY ./packages/db/package*.json ./packages/db/
+ENV NODE_ENV=production
+ENV TS_NODE_TRANSPILE_ONLY=true
 
-RUN npm install --workspace=packages/db --include-workspace-root
+WORKDIR /usr/src/app
 
-COPY ./tsconfig.json ./
-COPY ./packages/db ./packages/db
+COPY package.json package-lock.json ./
+COPY packages/db/package.json ./packages/db/package.json
 
-WORKDIR /usr/app/packages/db
+RUN npm install --workspace=packages/db --include-workspace-root --omit=dev
 
-ENTRYPOINT ["node", "--require", "ts-node/register", "../../node_modules/typeorm/cli.js", "-d", "./dataSource.ts"]
+COPY tsconfig.json ./
+COPY packages/db ./packages/db
+
+USER node
+WORKDIR /usr/src/app/packages/db
+
+ENTRYPOINT ["dumb-init", "node", "--require", "ts-node/register", "../../node_modules/typeorm/cli.js", "-d", "./dataSource.ts"]
 CMD ["migration:run"]
