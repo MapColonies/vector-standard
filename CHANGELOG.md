@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/MapColonies/vector-standard/compare/v1.2.0...v2.0.0) (2026-10-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Add namespaces and s3 json enrichment (MAPCO-11463) ([#28](https://github.com/MapColonies/vector-standard/issues/28))
+
+### Features
+
+* Add namespaces and s3 json enrichment (MAPCO-11463) ([#28](https://github.com/MapColonies/vector-standard/issues/28)) ([ee86a98](https://github.com/MapColonies/vector-standard/commit/ee86a989e4a3ee71482cb95ae74d52046f462820))
+
 ## [1.2.0](https://github.com/MapColonies/vector-standard/compare/v1.1.0...v1.2.0) (2026-08-10)
 
 
