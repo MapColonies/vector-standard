@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/MapColonies/vector-standard/compare/v2.0.0...v2.0.1) (2026-10-26)
+
+
+### Features
+
+* add token to route (MAPCO-11463) ([#34](https://github.com/MapColonies/vector-standard/issues/34)) ([8608854](https://github.com/MapColonies/vector-standard/commit/8608854ecd1adc7805a39de6c26af2468a520b8c))
+
 ## [2.0.0](https://github.com/MapColonies/vector-standard/compare/v1.2.0...v2.0.0) (2026-10-11)
 
 
