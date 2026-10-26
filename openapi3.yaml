@@ -2,7 +2,8 @@ openapi: 3.0.3
 info:
   title: Layers & Specs API
   description: >
-    API for retrieving geographic layer specifications. Layers expose a set of properties; `enum`-typed properties also carry their list of allowed values.
+    API for retrieving geographic layer specifications. Layers expose a set of
+    properties; `enum`-typed properties also carry their list of allowed values.
   version: 2.0.0
   license:
     name: Proprietary
@@ -54,19 +55,24 @@ components:
       in: header
       name: x-api-key
       description: >
-        Enforced by the API gateway, not by this service. The service itself never inspects the key - it only declares the requirement so that clients, and the "Authorize" dialog on this page, send it.
+        Enforced by the API gateway, not by this service. The service itself
+        never inspects the key - it only declares the requirement so that
+        clients, and the "Authorize" dialog on this page, send it.
     TokenAuth:
       type: apiKey
       in: query
       name: token
       description: >
-        Enforced by the API gateway, not by this service. An alternative to the x-api-key header, passed in the URL.
+        Enforced by the API gateway, not by this service. An alternative to the
+        x-api-key header, passed in the URL.
   parameters:
     NamespaceParam:
       name: namespace
       in: path
       required: true
-      description: The namespace the layer belongs to. Layer names are only unique within a namespace
+      description: >-
+        The namespace the layer belongs to. Layer names are only unique within a
+        namespace
       schema:
         type: string
         example: data-2025
@@ -131,7 +137,8 @@ components:
             $ref: '#/components/schemas/Error'
     Unauthorized:
       description: >
-        The `x-api-key` header was missing or rejected. Returned by the API gateway, which never forwards the request to this service.
+        The `x-api-key` header was missing or rejected. Returned by the API
+        gateway, which never forwards the request to this service.
       content:
         application/json:
           schema:
@@ -185,7 +192,8 @@ components:
     LayerSpec:
       type: object
       description: >
-        A layer and all of its properties. Groups rows from the `Property` entity by `layerName`.
+        A layer and all of its properties. Groups rows from the `Property`
+        entity by `layerName`.
       properties:
         layerName:
           type: string
@@ -206,7 +214,10 @@ components:
     Property:
       type: object
       description: >
-        A single property definition for a layer. Mirrors the `Property` entity, minus `id` and `layerName` (which are implicit on the parent `LayerSpec`). When the property has coded/enumerated values, `possibleValues` is populated.
+        A single property definition for a layer. Mirrors the `Property` entity,
+        minus `id` and `layerName` (which are implicit on the parent
+        `LayerSpec`). When the property has coded/enumerated values,
+        `possibleValues` is populated.
       properties:
         property:
           type: string
@@ -221,7 +232,8 @@ components:
         possibleValues:
           type: array
           description: >
-            Allowed values for properties that have a fixed set of coded values. Omitted when the property accepts arbitrary values.
+            Allowed values for properties that have a fixed set of coded values.
+            Omitted when the property accepts arbitrary values.
           items:
             type: string
       required:
