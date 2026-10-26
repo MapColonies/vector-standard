@@ -100,6 +100,13 @@ describe('layer', function () {
         expect(layers).toHaveLength(2);
         expect(layers).not.toContainEqual({ layerName: 'rivers_line', alias: 'Rivers' });
       });
+
+      it('should return 200 when the gateway token is passed as a query parameter', async function () {
+        const response = await requestSender.getLayers(NAMESPACE, { token: 'some-token' });
+
+        expect(response.statusCode).toBe(httpStatusCodes.OK);
+        expect(response.body.layers).toHaveLength(2);
+      });
     });
 
     describe('GET /namespaces/:namespace/layers/:layerName', function () {
@@ -182,6 +189,12 @@ describe('layer', function () {
     });
 
     describe('GET /namespaces/:namespace/layers', function () {
+      it('should return 400 bad request for an unknown query parameter', async function () {
+        const response = await requestSender.getLayers(NAMESPACE, { unknown: 'value' });
+
+        expect(response.statusCode).toBe(httpStatusCodes.BAD_REQUEST);
+      });
+
       it('should return 404 not found for a namespace holding no layers', async function () {
         const response = await requestSender.getLayers('nonexistent');
 
