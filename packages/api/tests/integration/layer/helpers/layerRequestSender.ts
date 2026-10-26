@@ -16,8 +16,10 @@ export class LayerRequestSender {
     return agent(this.app).get('/namespaces');
   }
 
-  public async getLayers(namespace: string): Promise<TypedResponse<GetLayersResponse>> {
-    return agent(this.app).get(`/namespaces/${namespace}/layers`);
+  public async getLayers(namespace: string, query?: Record<string, string>): Promise<TypedResponse<GetLayersResponse>> {
+    return agent(this.app)
+      .get(`/namespaces/${namespace}/layers`)
+      .query(query ?? {});
   }
 
   public async getLayerByName(namespace: string, layerName: string): Promise<TypedResponse<Layer>> {

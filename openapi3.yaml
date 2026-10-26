@@ -10,6 +10,7 @@ info:
     url: https://example.com/licenses/proprietary
 security:
   - ApiKeyAuth: []
+  - TokenAuth: []
 paths:
   /namespaces:
     get:
@@ -57,6 +58,13 @@ components:
         Enforced by the API gateway, not by this service. The service itself
         never inspects the key - it only declares the requirement so that
         clients, and the "Authorize" dialog on this page, send it.
+    TokenAuth:
+      type: apiKey
+      in: query
+      name: token
+      description: >
+        Enforced by the API gateway, not by this service. An alternative to the
+        x-api-key header, passed in the URL.
   parameters:
     NamespaceParam:
       name: namespace
