@@ -69,7 +69,7 @@ describe('SharedLuaSource', function () {
       const s3Repository = makeS3Repository(makeLua(makeEntry('1', 'buildings', 'Buildings')));
       const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, disabledEnrichmentConfig);
 
-      const records = await source.tick([{ layerName: 'buildings', enums: [] }]);
+      const records = await source.tick([{ layerName: 'buildings', source: 'lua', enums: [] }]);
       const record = records.get('buildings');
 
       expect(record?.layerId).toBe(1);
@@ -96,10 +96,56 @@ describe('SharedLuaSource', function () {
       const s3Repository = makeS3Repository(makeLua(makeEntry('1', 'buildings', 'Buildings')));
       const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, enrichmentConfig);
 
-      const records = await source.tick([{ layerName: 'buildings', enums: [] }]);
+      const records = await source.tick([{ layerName: 'buildings', source: 'lua', enums: [] }]);
       const record = records.get('buildings');
 
       expect(record?.propertyAliases.get('name')).toBe('Name');
+    });
+
+    it('should resolve a logical layer absent from the lua file using its configured id and alias', async function () {
+      const s3Repository = makeS3Repository(makeLua(makeEntry('1', 'buildings', 'Buildings')));
+      const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, disabledEnrichmentConfig);
+
+      const records = await source.tick([{ layerName: 'roads', enums: [], source: 'logical', layerId: 7, alias: 'Roads' }]);
+      const record = records.get('roads');
+
+      expect(record?.layerId).toBe(7);
+      expect(record?.alias).toBe('Roads');
+      expect(record?.source).toBe('sharedLua');
+    });
+
+    it('should prefer the configured id and alias of a logical layer over the lua file', async function () {
+      const s3Repository = makeS3Repository(makeLua(makeEntry('1', 'buildings', 'Buildings')));
+      const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, disabledEnrichmentConfig);
+
+      const records = await source.tick([{ layerName: 'buildings', enums: [], source: 'logical', layerId: 9, alias: 'Logical Buildings' }]);
+      const record = records.get('buildings');
+
+      expect(record?.layerId).toBe(9);
+      expect(record?.alias).toBe('Logical Buildings');
+    });
+
+    it('should fetch property aliases for a logical layer when enrichment is enabled', async function () {
+      const enrichmentConfig: SharedLuaSourceConfig = {
+        ...disabledEnrichmentConfig,
+        enrichment: {
+          enabled: true,
+          api: `${ENRICHMENT_ORIGIN}/{layerId}`,
+          propertiesPath: 'fields_list',
+          aliasField: 'display_name',
+          requestTimeoutMilliseconds: 5000,
+        },
+      };
+      nock(ENRICHMENT_ORIGIN)
+        .get('/7')
+        .reply(200, { fields_list: { name: { display_name: 'Name' } } });
+
+      const s3Repository = makeS3Repository(makeLua(''));
+      const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, enrichmentConfig);
+
+      const records = await source.tick([{ layerName: 'roads', enums: [], source: 'logical', layerId: 7, alias: 'Roads' }]);
+
+      expect(records.get('roads')?.propertyAliases.get('name')).toBe('Name');
     });
   });
 
@@ -108,7 +154,7 @@ describe('SharedLuaSource', function () {
       const s3Repository = makeS3Repository(makeLua(makeEntry('1', 'buildings', 'Buildings')));
       const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, disabledEnrichmentConfig);
 
-      const records = await source.tick([{ layerName: 'roads', enums: [] }]);
+      const records = await source.tick([{ layerName: 'roads', source: 'lua', enums: [] }]);
 
       expect(records.has('roads')).toBe(false);
     });
@@ -131,7 +177,7 @@ describe('SharedLuaSource', function () {
       const s3Repository = makeS3Repository(makeLua(makeEntry('1', 'buildings', 'Buildings')));
       const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, enrichmentConfig);
 
-      const records = await source.tick([{ layerName: 'buildings', enums: [] }]);
+      const records = await source.tick([{ layerName: 'buildings', source: 'lua', enums: [] }]);
       const record = records.get('buildings');
 
       expect(record?.layerId).toBe(1);

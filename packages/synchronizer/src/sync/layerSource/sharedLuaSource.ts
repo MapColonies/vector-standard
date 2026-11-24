@@ -1,5 +1,6 @@
 import type { Logger } from '@map-colonies/js-logger';
 import { layerSource } from '@db';
+import { layerEntrySource } from '@common/constants';
 import type { LayerEnums, SharedLuaSourceConfig } from '@common/interfaces';
 import type { FsRepository } from '@common/fs/fsRepository';
 import { fetchPropertyAliases } from '../aliasEnricher';
@@ -47,6 +48,12 @@ export class SharedLuaSource implements LayerSourceStrategy {
 
     const records = new Map<string, LayerSourceRecord>();
     for (const layer of layers) {
+      if (layer.source === layerEntrySource.logical) {
+        const logicalLayer: LuaLayer = { layerId: layer.layerId, layerName: layer.layerName, alias: layer.alias };
+        records.set(layer.layerName, await resolveOne(layer, logicalLayer, this.config, this.logger));
+        continue;
+      }
+
       const luaLayer = luaLayers.get(layer.layerName);
       if (luaLayer === undefined) {
         this.logger.warn({ msg: `Layer ${layer.layerName} not found in lua file, skipping` });
