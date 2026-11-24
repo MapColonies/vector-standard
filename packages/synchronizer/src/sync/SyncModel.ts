@@ -8,7 +8,7 @@ import { startActivePromisifiedSpan } from '@common/tracing/util';
 import { SyncAttributes, SyncSpanName } from '@common/tracing/sync';
 import { SERVICES, SOURCE_DATA_SOURCE_PROVIDER } from '@common/constants';
 import { ConfigType } from '@common/config';
-import { InsertPropertyDTO, LayerEnums } from '@src/common/interfaces';
+import { BaseLayerEnums, InsertPropertyDTO } from '@src/common/interfaces';
 import { CaseInsensitiveMap } from '@src/common/caseInsensitiveMap';
 import { columnInfosToProperties, excludedPropertySet, schemaOf, toPostgresIdentifier } from './helpers';
 import {
@@ -48,7 +48,7 @@ export class SyncModel {
     @inject(ENUMS_REPOSITORY_SYMBOL) private readonly enumsRepository: Repository<EnumValue>
   ) {}
 
-  public async syncFullLayer(namespace: string, layer: LayerEnums, record: LayerSourceRecord, context: SyncFullLayerContext): Promise<void> {
+  public async syncFullLayer(namespace: string, layer: BaseLayerEnums, record: LayerSourceRecord, context: SyncFullLayerContext): Promise<void> {
     return startActivePromisifiedSpan(
       SyncSpanName.SYNC_FULL_LAYER,
       { [SyncAttributes.LAYER_NAME]: layer.layerName, [SyncAttributes.NAMESPACE]: namespace },
@@ -118,7 +118,7 @@ export class SyncModel {
     }
   }
 
-  public async getEnumDistinctValues({ layerName, enums }: LayerEnums): Promise<Map<string, string[]>> {
+  public async getEnumDistinctValues({ layerName, enums }: BaseLayerEnums): Promise<Map<string, string[]>> {
     return startActivePromisifiedSpan(
       SyncSpanName.GET_ENUM_DISTINCT_VALUES,
       { [SyncAttributes.LAYER_NAME]: layerName },
@@ -176,7 +176,7 @@ export class SyncModel {
 
   public async syncProperties(
     namespace: string,
-    layer: LayerEnums,
+    layer: BaseLayerEnums,
     typeMap: TypeMap,
     fileAliases: FileAliases,
     sourceAliases: Map<string, string>
@@ -263,7 +263,7 @@ export class SyncModel {
     }
   }
 
-  public async ensureEnumIndexes(layer: LayerEnums): Promise<void> {
+  public async ensureEnumIndexes(layer: BaseLayerEnums): Promise<void> {
     if (layer.enums.length === 0) {
       return;
     }
@@ -300,7 +300,7 @@ export class SyncModel {
     }
   }
 
-  public async existingEnumColumns(layer: LayerEnums): Promise<string[]> {
+  public async existingEnumColumns(layer: BaseLayerEnums): Promise<string[]> {
     if (layer.enums.length === 0) {
       return [];
     }
@@ -316,9 +316,9 @@ export class SyncModel {
     return existing;
   }
 
-  public async syncEnum(namespace: string, layer: LayerEnums): Promise<number> {
+  public async syncEnum(namespace: string, layer: BaseLayerEnums): Promise<number> {
     return startActivePromisifiedSpan(SyncSpanName.SYNC_ENUM, { [SyncAttributes.LAYER_NAME]: layer.layerName }, contextAPI.active(), async (span) => {
-      const existingLayer: LayerEnums = { layerName: layer.layerName, enums: await this.existingEnumColumns(layer) };
+      const existingLayer: BaseLayerEnums = { layerName: layer.layerName, enums: await this.existingEnumColumns(layer) };
 
       await this.ensureEnumIndexes(existingLayer);
       const enumValuesByColumn = await this.getEnumDistinctValues(existingLayer);

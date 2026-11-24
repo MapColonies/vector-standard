@@ -1,5 +1,6 @@
 import type { Logger } from '@map-colonies/js-logger';
 import { layerSource } from '@db';
+import { layerEntrySource } from '@common/constants';
 import type { LayerEnums, SharedLuaSourceConfig } from '@common/interfaces';
 import type { FsRepository } from '@common/fs/fsRepository';
 import { fetchPropertyAliases } from '../aliasEnricher';
@@ -34,19 +35,19 @@ export class SharedLuaSource implements LayerSourceStrategy {
   ) {}
 
   public async tick(layers: LayerEnums[]): Promise<Map<string, LayerSourceRecord>> {
-    this.logger.debug('Loading lua query data');
-    const filePath = await this.s3Repository.downloadFile(this.bucket, this.config.fileName);
-    const content = (await this.fsRepository.readFile(filePath, 'utf-8')).toString();
-    const luaLayers = parseLuaLayers(
-      content,
-      this.config.layersVariable,
-      this.config.idFieldName,
-      this.config.nameFieldName,
-      this.config.aliasFieldName
-    );
+    const luaLayers = layers.some((layer) => layer.source === layerEntrySource.lua) ? await this.loadLuaLayers() : undefined;
 
     const records = new Map<string, LayerSourceRecord>();
     for (const layer of layers) {
+      if (layer.source === layerEntrySource.logical) {
+        records.set(layer.layerName, await resolveOne(layer, layer, this.config, this.logger));
+        continue;
+      }
+
+      if (luaLayers === undefined) {
+        continue;
+      }
+
       const luaLayer = luaLayers.get(layer.layerName);
       if (luaLayer === undefined) {
         this.logger.warn({ msg: `Layer ${layer.layerName} not found in lua file, skipping` });
@@ -55,5 +56,17 @@ export class SharedLuaSource implements LayerSourceStrategy {
       records.set(layer.layerName, await resolveOne(layer, luaLayer, this.config, this.logger));
     }
     return records;
+  }
+
+  private async loadLuaLayers(): Promise<Map<string, LuaLayer> | undefined> {
+    this.logger.debug('Loading lua query data');
+    try {
+      const filePath = await this.s3Repository.downloadFile(this.bucket, this.config.fileName);
+      const content = (await this.fsRepository.readFile(filePath, 'utf-8')).toString();
+      return parseLuaLayers(content, this.config.layersVariable, this.config.idFieldName, this.config.nameFieldName, this.config.aliasFieldName);
+    } catch (err) {
+      this.logger.error({ msg: `Failed to load lua file ${this.config.fileName}, skipping lua layers`, err });
+      return undefined;
+    }
   }
 }

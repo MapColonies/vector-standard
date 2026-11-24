@@ -1,13 +1,13 @@
 import type { Logger } from '@map-colonies/js-logger';
 import { layerSource } from '@db';
-import type { LayerEnums, PerLayerJsonSourceConfig } from '@common/interfaces';
+import type { BaseLayerEnums, PerLayerJsonSourceConfig } from '@common/interfaces';
 import type { FsRepository } from '@common/fs/fsRepository';
 import { LayerJsonFetchError, LayerJsonParseError } from '../errors';
 import type { FileDownloader, LayerSourceRecord, LayerSourceStrategy } from './types';
 import { parseDocument } from './aliasJsonParser';
 
 const resolveOne = async (
-  layer: LayerEnums,
+  layer: BaseLayerEnums,
   sourceKey: string,
   s3Repository: FileDownloader,
   fsRepository: FsRepository,
@@ -48,7 +48,7 @@ export class PerLayerJsonSource implements LayerSourceStrategy {
     private readonly config: PerLayerJsonSourceConfig
   ) {}
 
-  public async tick(layers: LayerEnums[]): Promise<Map<string, LayerSourceRecord>> {
+  public async tick(layers: BaseLayerEnums[]): Promise<Map<string, LayerSourceRecord>> {
     const records = new Map<string, LayerSourceRecord>();
     for (const layer of layers) {
       if (layer.sourceKey === undefined) {

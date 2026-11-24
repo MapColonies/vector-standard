@@ -30,6 +30,11 @@ export const REPOSITORIES = [
 
 export const ALL_KEYS_SELECTOR = '*';
 
+export const layerEntrySource = {
+  lua: 'lua',
+  logical: 'logical',
+} as const;
+
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SERVICES = {
   LOGGER: Symbol('Logger'),
