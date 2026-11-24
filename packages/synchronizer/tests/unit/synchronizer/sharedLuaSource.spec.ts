@@ -161,6 +161,28 @@ describe('SharedLuaSource', function () {
   });
 
   describe('Bad Path', function () {
+    it('should still resolve logical layers when the lua file cannot be downloaded', async function () {
+      const s3Repository: FileDownloader = { downloadFile: vi.fn().mockRejectedValue(new Error('s3 down')) };
+      const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, disabledEnrichmentConfig);
+
+      const records = await source.tick([
+        { layerName: 'buildings', enums: [], source: 'lua' },
+        { layerName: 'roads', enums: [], source: 'logical', layerId: 7, alias: 'Roads' },
+      ]);
+
+      expect(records.has('buildings')).toBe(false);
+      expect(records.get('roads')?.layerId).toBe(7);
+    });
+
+    it('should not download the lua file when every layer is logical', async function () {
+      const s3Repository: FileDownloader = { downloadFile: vi.fn() };
+      const source = new SharedLuaSource(s3Repository, fsRepository, logger, BUCKET, disabledEnrichmentConfig);
+
+      await source.tick([{ layerName: 'roads', enums: [], source: 'logical', layerId: 7, alias: 'Roads' }]);
+
+      expect(s3Repository.downloadFile).not.toHaveBeenCalled();
+    });
+
     it('should resolve without property aliases when the enrichment API fails', async function () {
       const enrichmentConfig: SharedLuaSourceConfig = {
         ...disabledEnrichmentConfig,

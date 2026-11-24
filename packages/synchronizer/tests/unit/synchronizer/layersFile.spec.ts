@@ -38,6 +38,14 @@ describe('parseLayers', function () {
       expect(() => parseLayers([{ layerName: 'roads', enums: [], source: 'logical', layerId: 7 }], source)).toThrow(LayersFileError);
     });
 
+    it('should reject a layer id on a non-logical layer', function () {
+      expect(() => parseLayers([{ layerName: 'roads', enums: [], layerId: 7 }], source)).toThrow(LayersFileError);
+    });
+
+    it('should reject an alias on a non-logical layer', function () {
+      expect(() => parseLayers([{ layerName: 'roads', enums: [], source: 'lua', alias: 'Roads' }], source)).toThrow(LayersFileError);
+    });
+
     it('should reject a non-integer layer id', function () {
       expect(() => parseLayers([{ layerName: 'roads', enums: [], source: 'logical', layerId: '7', alias: 'Roads' }], source)).toThrow(
         LayersFileError

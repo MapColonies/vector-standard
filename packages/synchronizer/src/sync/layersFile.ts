@@ -21,6 +21,7 @@ const isLayersFile = ajv.compile<LayerEnums[]>({
     required: ['layerName', 'enums'],
     if: { properties: { source: { const: layerEntrySource.logical } }, required: ['source'] },
     then: { required: ['layerId', 'alias'] },
+    else: { not: { anyOf: [{ required: ['layerId'] }, { required: ['alias'] }] } },
   },
 });
 
