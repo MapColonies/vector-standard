@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/MapColonies/vector-standard/compare/v2.0.1...v2.1.0) (2026-11-24)
+
+
+### Features
+
+* add logical layer compatibility (MAPCO-12817) ([#36](https://github.com/MapColonies/vector-standard/issues/36)) ([a4c7481](https://github.com/MapColonies/vector-standard/commit/a4c74814f7b8096320c6505a4bec02b0acfac501))
+
 ## [2.0.1](https://github.com/MapColonies/vector-standard/compare/v2.0.0...v2.0.1) (2026-10-26)
 
 
